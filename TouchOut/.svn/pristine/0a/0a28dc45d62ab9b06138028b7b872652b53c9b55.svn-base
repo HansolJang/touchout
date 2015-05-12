@@ -1,0 +1,23 @@
+package kr.jroad.touchout.data;
+
+import com.google.gson.annotations.SerializedName;
+
+public class ReviewItem {
+	public int review_id;
+	public int user_id;
+	
+	@SerializedName("user_name")
+	public String name;
+	
+	@SerializedName("image")
+	public String profileURL; //리뷰올린 사람의 프로필 사진
+	
+	public int star; //avg만 float
+	public String content;
+	
+	@SerializedName("create_time")
+	public String time;
+	
+	///////////////////////////view variable
+	public int timeIconId;
+}

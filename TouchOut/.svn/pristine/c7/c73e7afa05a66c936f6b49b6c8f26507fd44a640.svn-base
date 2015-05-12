@@ -1,0 +1,136 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.activity.StoreMenuActivity;
+import kr.jroad.touchout.adapter.MenuListAdapter;
+import kr.jroad.touchout.adapter.MenuListAdapter.OnAddCartAdapterListener;
+import kr.jroad.touchout.adapter.MenuListAdapter.OnFavoriteAdapterListener;
+import kr.jroad.touchout.data.FavoriteItem;
+import kr.jroad.touchout.data.PostResult;
+import kr.jroad.touchout.data.StoreMenuItem;
+import kr.jroad.touchout.data.StoreMenuResult;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ListView;
+
+public class StoreIcedMenuFragment extends Fragment {
+
+	ListView menuList;
+	MenuListAdapter menuAdapter;
+	int storeId;
+	FavoriteItem editFavoriteMenu;;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		Bundle b = getArguments();
+		if (b != null) {
+			editFavoriteMenu = b.getParcelable(FavoriteFragment.GO_EDIT_MENU);
+		}
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_iced_menu, container, false);
+	}
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		storeId = ((StoreMenuActivity) getActivity()).getStoreId();
+
+		menuList = (ListView) view.findViewById(R.id.store_iced_menu_list);
+		menuAdapter = new MenuListAdapter(getActivity());
+
+		menuAdapter.setOnAddCartAdapterListener(new OnAddCartAdapterListener() {
+
+			@Override
+			public void onAddCartAdapterListener(View v, StoreMenuItem data) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+
+		menuAdapter
+		.setOnFavoriteAdapterListener(new OnFavoriteAdapterListener() {
+
+			@Override
+			public void onFavoriteAdapterListener(View v,
+					StoreMenuItem data) {
+
+				if (editFavoriteMenu != null) {
+					NetworkManager.getInstance().editFavoriteData(
+							getActivity(),
+							editFavoriteMenu.favorite_id, data.item_id,
+							data.whippingSelected, data.size,
+							new OnResultListener<PostResult>() {
+
+								//완료하면 창닫고 즐찾 목록 다시 get
+								@Override
+								public void onSuccess(PostResult result) {
+									if(result.success == 1) {
+										getActivity().finish();
+									}
+								}
+
+								@Override
+								public void onFail(int code) {
+									// TODO Auto-generated method stub
+
+								}
+
+							});
+				}
+			}
+		});
+
+		menuList.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				menuAdapter.clearSelected();
+				StoreMenuItem selectedMenuData = (StoreMenuItem) menuList
+						.getItemAtPosition(position);
+				selectedMenuData.menuSelected = true;
+				menuAdapter.notifyDataSetChanged();
+			}
+		});
+
+		menuList.setAdapter(menuAdapter);
+
+		initMenuData();
+
+	}
+
+	private void initMenuData() {
+		NetworkManager.getInstance().getMenuData(getActivity(), storeId,
+				new OnResultListener<StoreMenuResult>() {
+
+					@Override
+					public void onSuccess(StoreMenuResult result) {
+						if (result.success == 1) {
+							for (StoreMenuItem menu : result.result.items.cold) {
+								menuAdapter.add(menu);
+							}
+						}
+					}
+
+					@Override
+					public void onFail(int code) {
+
+					}
+				});
+	}
+}

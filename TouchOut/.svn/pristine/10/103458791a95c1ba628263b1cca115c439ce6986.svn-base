@@ -1,0 +1,115 @@
+package kr.jroad.touchout.adapter;
+
+import java.util.ArrayList;
+
+import kr.jroad.touchout.data.FavoriteItem;
+import kr.jroad.touchout.view.FavoriteMenuListView;
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+
+public class FavoriteMenuAdapter extends BaseAdapter implements
+		FavoriteMenuListView.OnEditClickListener,
+		FavoriteMenuListView.OnRemoveClickListener {
+	
+	public interface OnAdapterEditListener {
+		public void onAdapterEditListener(View v, FavoriteItem data);
+	}
+	
+	public interface OnAdapterRemoveListener {
+		public void onAdapterRemoveListener(View v, FavoriteItem data);
+	}
+	
+	OnAdapterRemoveListener removeListener;
+	OnAdapterEditListener editListener;
+	public void setOnAdapterEditListener(OnAdapterEditListener listener) {
+		editListener = listener;
+	}
+	
+	public void setOnAdapterRemoveListener(OnAdapterRemoveListener listener) {
+		removeListener = listener;
+	}
+
+	Context mContext;
+	ArrayList<FavoriteItem> items = new ArrayList<FavoriteItem>();
+
+	public FavoriteMenuAdapter(Context context) {
+		mContext = context;
+	}
+	
+	public void clear() {
+		items.clear();
+		notifyDataSetChanged();
+	}
+
+	public void add(FavoriteItem data) {
+		items.add(data);
+		notifyDataSetChanged();
+	}
+
+	public void remove(FavoriteItem data) {
+		items.remove(data);
+		notifyDataSetChanged();
+	}
+
+	public void remove(int position) {
+		items.remove(position);
+		notifyDataSetChanged();
+	}
+	
+	//메뉴가 눌리면 편집이 가능하게 함
+	boolean editable = false;
+	
+	public void setEditable(boolean editable) {
+		this.editable = editable;
+		notifyDataSetChanged();
+	}
+
+	@Override
+	public int getCount() {
+		return items.size();
+	}
+
+	@Override
+	public Object getItem(int position) {
+		return items.get(position);
+	}
+
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup arg2) {
+		FavoriteMenuListView view;
+		if (convertView == null) {
+			view = new FavoriteMenuListView(mContext);
+			view.setOnEditClickListener(this);
+			view.setOnRemoveClickListener(this);
+		} else {
+			view = (FavoriteMenuListView) convertView;
+		}
+		view.setData(items.get(position));
+		view.setEditable(editable);
+		return view;
+	}
+
+	@Override
+	public void onRemoveClickListener(FavoriteMenuListView view,
+			FavoriteItem data) {
+		if(removeListener != null) {
+			removeListener.onAdapterRemoveListener(view, data);
+		}
+	}
+
+	@Override
+	public void onEditClickListener(FavoriteMenuListView view,
+			FavoriteItem data) {
+		if(editListener != null) {
+			editListener.onAdapterEditListener(view, data);
+		}
+	}
+
+}

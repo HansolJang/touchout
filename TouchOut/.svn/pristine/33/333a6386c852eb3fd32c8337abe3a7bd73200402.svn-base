@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="360dp"
+    android:layout_height="640dp"
+    android:orientation="vertical" >
+
+    <Button
+        android:id="@+id/extra_exit_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:text="X" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="360dp"
+        android:layout_height="110dp"
+        android:visibility="invisible"
+        android:layout_weight="1"
+        android:text="TextView" />
+
+    <ListView
+        android:id="@+id/extra_dialog_grid"
+        style="@style/DyDialog"
+        android:layout_width="360dp"
+        android:layout_height="0dp"
+        android:divider="@drawable/null_image"
+        android:layout_weight="1"
+        android:listSelector="@drawable/null_image" >
+    </ListView>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="360dp"
+        android:layout_height="110dp"
+        android:visibility="invisible"
+        android:layout_weight="1"
+        android:text="TextView" />
+
+</LinearLayout>

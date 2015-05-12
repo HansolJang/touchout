@@ -1,0 +1,379 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.adapter.MenuListAdapter;
+import kr.jroad.touchout.adapter.MenuListAdapter.OnMenuAdapterClickListner;
+import kr.jroad.touchout.data.FavoriteItem;
+import kr.jroad.touchout.data.PostResult;
+import kr.jroad.touchout.data.SortingStore;
+import kr.jroad.touchout.data.StampItem;
+import kr.jroad.touchout.data.StoreMenuItem;
+import kr.jroad.touchout.data.StoreMenuResult;
+import kr.jroad.touchout.dialog.StampDialogFragment;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.PropertyManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import kr.jroad.touchout.view.MenuListView;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ListView;
+
+public class StoreIcedMenuFragment extends Fragment {
+
+	ListView menuList;
+	MenuListAdapter menuAdapter;
+	int storeId;
+	FavoriteItem editFavoriteMenu;;
+	StampItem storeStamp;
+	SortingStore selectedStore;
+	int amount;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setHasOptionsMenu(true);
+
+		Bundle b = getArguments();
+		if (b != null) {
+			// 즐찾에서 넘어왔으면 즐찾에서 아이디로 매장 검색후 매장 객체 넘겨주도록 고쳐야함
+			editFavoriteMenu = b.getParcelable(FavoriteFragment.GO_EDIT_MENU);
+			selectedStore = b
+					.getParcelable(HomeAllStoreFragment.SELECTED_STORE);
+		}
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_iced_menu, container, false);
+	}
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		//메뉴 검색에 쓸 store_id 세팅
+				if(selectedStore != null) {
+					storeId = selectedStore.store_id;
+				} else if (editFavoriteMenu != null) {
+					storeId = editFavoriteMenu.store_id;
+				}
+
+		menuList = (ListView) view.findViewById(R.id.store_iced_menu_list);
+		menuAdapter = new MenuListAdapter(getActivity());
+
+		menuAdapter
+				.setOnMenuAdapterClickListner(new OnMenuAdapterClickListner() {
+
+					@Override
+					public void onWhippingSelectListener(MenuListView view,
+							StoreMenuItem data) {
+						data.whippingSelected = !data.whippingSelected;
+						menuAdapter.notifyDataSetChanged();
+					}
+
+					@Override
+					public void onPaymentListener(MenuListView view,
+							StoreMenuItem data) {
+						// 체크된 모든 정보 읽어서 결제
+					}
+
+					@Override
+					public void onFavoriteSelectListener(MenuListView view,
+							StoreMenuItem data) {
+						data.isFavorite = !data.isFavorite;
+						menuAdapter.notifyDataSetChanged();
+
+						if(data.whippingSelected) {
+							data.is_whipping = 1;
+						} else {
+							data.is_whipping = 0;
+						}
+
+						if (data.isFavorite) {
+							// /////////////즐겨찾기 선택 안되어있어서 클릭하여 선택됨!
+
+							// !null -> edit
+							if (editFavoriteMenu != null) {
+								NetworkManager.getInstance().editFavoriteData(
+										getActivity(),
+										editFavoriteMenu.favorite_id,
+										data.item_id, data.is_whipping,
+										data.selectedSize,
+										new OnResultListener<PostResult>() {
+
+											// 완료하면 창닫고 즐찾 목록 다시 get
+											@Override
+											public void onSuccess(
+													PostResult result) {
+												if (result.success == 1) {
+													getActivity().finish();
+													Toast.makeText(getActivity(), "즐겨찾기가 수정되었습니다!", Toast.LENGTH_SHORT).show();
+												}
+											}
+
+											@Override
+											public void onFail(int code) {
+												Toast.makeText(getActivity(),
+														"즐겨찾기 수정에 실패하였습니다.",
+														Toast.LENGTH_SHORT)
+														.show();
+											}
+										});
+							} else {
+								// 수정할 객체가 null이면 새로 add favorite
+								NetworkManager.getInstance().addFavoriteData(
+										getActivity(), data.item_id,
+										data.whippingSelected,
+										data.selectedSize,
+										new OnResultListener<PostResult>() {
+
+											@Override
+											public void onSuccess(
+													PostResult result) {
+												if (result.success == 1) {
+													Toast.makeText(
+															getActivity(),
+															"즐겨찾기에 추가되었습니다!",
+															Toast.LENGTH_SHORT)
+															.show();
+												}
+											}
+
+											@Override
+											public void onFail(int code) {
+												Toast.makeText(getActivity(),
+														"즐겨찾기 추가에 실패하였습니다.",
+														Toast.LENGTH_SHORT)
+														.show();
+											}
+
+										});
+							}
+
+						} else {
+							///////////isFavorite = false
+							// 한 페이지에서 한번 추가후 취소한 데이터 삭제
+							NetworkManager.getInstance().cancelFavoriteData(
+									getActivity(), data.item_id,
+									data.whippingSelected, data.selectedSize,
+									new OnResultListener<PostResult>() {
+
+										@Override
+										public void onSuccess(PostResult result) {
+											if (result.success == 1) {
+												Toast.makeText(getActivity(), "즐겨찾기 추가 취소", Toast.LENGTH_SHORT).show();
+											}
+										}
+
+										@Override
+										public void onFail(int code) {
+											// TODO Auto-generated method stub
+
+										}
+
+									});
+						}
+
+					}
+
+					@Override
+					public void onCountPlusListener(MenuListView view,
+							StoreMenuItem data) {
+						amount = data.menuPrice / data.count;
+						data.count++;
+						// 가격 세팅
+						data.menuPrice = amount * data.count;
+
+						menuAdapter.notifyDataSetChanged();
+					}
+
+					@Override
+					public void onCountMinusListener(MenuListView view,
+							StoreMenuItem data) {
+						if (data.count < 2) {
+							Toast.makeText(getActivity(), "수량을 올려주세요!",
+									Toast.LENGTH_SHORT).show();
+						} else {
+							amount = data.menuPrice / data.count;
+							data.count--;
+							// 가격 세팅
+							data.menuPrice = amount * data.count;
+							menuAdapter.notifyDataSetChanged();
+						}
+					}
+
+					/*******
+					 * 장바구니에 이미 같은게 있으면 안더해져야함.....서버에서 처리
+					 * *******/
+					@Override
+					public void onAddCartListener(MenuListView view,
+							StoreMenuItem data) {
+						NetworkManager.getInstance().addCartItem(getActivity(),
+								data.item_id, data.count,
+								data.whippingSelected, data.selectedSize,
+								new OnResultListener<PostResult>() {
+
+									// add cart 성공하면 숫자 ++
+									@Override
+									public void onSuccess(PostResult result) {
+										if (result.success == 1) {
+											PropertyManager
+													.getInstance()
+													.setCartItemNumber(
+															PropertyManager
+																	.getInstance()
+																	.getCartItemNumber() + 1);
+										}
+									}
+
+									@Override
+									public void onFail(int code) {
+										// TODO Auto-generated method stub
+
+									}
+								});
+					}
+
+					/***
+					 * ** 사이즈가 계속 R임 안바뀜
+					 * ****/
+					@Override
+					public void onSizeRegularListener(MenuListView view,
+							StoreMenuItem data) {
+						if (data.selectedSize.equalsIgnoreCase("L")) {
+							data.selectedSize = "R";
+							data.menuPrice = data.menuPrice - 500;
+							menuAdapter.notifyDataSetChanged();
+						} else {
+							data.selectedSize = "R";
+							menuAdapter.notifyDataSetChanged();
+						}
+					}
+
+					@Override
+					public void onSizeLargeListener(MenuListView view,
+							StoreMenuItem data) {
+						if (data.selectedSize.equalsIgnoreCase("R")) {
+							data.selectedSize = "L";
+							amount = data.menuPrice;
+							data.menuPrice += 500;
+							menuAdapter.notifyDataSetChanged();
+						} else {
+							data.selectedSize = "L";
+							menuAdapter.notifyDataSetChanged();
+						}
+					}
+				});
+
+		menuList.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				menuAdapter.clearSelected();
+				StoreMenuItem selectedMenuData = (StoreMenuItem) menuList
+						.getItemAtPosition(position);
+				selectedMenuData.menuSelected = true;
+				menuAdapter.notifyDataSetChanged();
+			}
+		});
+
+		menuList.setAdapter(menuAdapter);
+
+	}
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		getMenuData();
+	}
+
+	private void getMenuData() {
+		NetworkManager.getInstance().getMenuData(getActivity(), storeId,
+				new OnResultListener<StoreMenuResult>() {
+
+					@Override
+					public void onSuccess(StoreMenuResult result) {
+						if (result.success == 1) {
+							for (StoreMenuItem menu : result.result.items) {
+								//if ice
+								if(menu.is_hot == 0) {
+									menuAdapter.add(menu);
+								}
+							}
+							if (result.result.stamp != null) {
+								storeStamp = result.result.stamp;
+							}
+						}
+					}
+
+					@Override
+					public void onFail(int code) {
+						// TODO Auto-generated method stub
+
+					}
+				});
+	}
+
+	MenuItem menuStamp;
+
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+		super.onCreateOptionsMenu(menu, inflater);
+		inflater.inflate(R.menu.store_menu_info_menu, menu);
+		menuStamp = menu.findItem(R.id.store_menu_stamp);
+
+		if (storeStamp != null) {
+			menuStamp.setVisible(true);
+		} else {
+			menuStamp.setVisible(false);
+		}
+	}
+
+	public static final String STORE_STAMP_DIALOG_KEY = "storeStampDialogKey";
+	public static final String STORE_STAMP_KEY = "storeStampKey";
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId() == R.id.store_menu_stamp) {
+			// dialog!!
+			Bundle b = new Bundle();
+			if (storeStamp != null) {
+				/*****
+				 * *** 매장 이름 하나 때문에 넘기는 거임 가능하면 수정해야함!
+				 * ****/
+				// 목록 에서 들어왔으면 그 객체를 보냄
+				if (selectedStore != null) {
+					b.putParcelable(HomeAllStoreFragment.SELECTED_STORE,
+							selectedStore);
+				} else if (editFavoriteMenu != null) {
+					// 즐겨찾기에서 들어왔으면 그 정보를 보냄
+					b.putParcelable(FavoriteFragment.GO_EDIT_MENU,
+							editFavoriteMenu);
+				}
+				if(storeStamp != null) {
+					b.putParcelable(STORE_STAMP_KEY, storeStamp);
+				}
+
+				StampDialogFragment stampDialog = new StampDialogFragment();
+				stampDialog.setArguments(b);
+				stampDialog.show(getChildFragmentManager(),
+						STORE_STAMP_DIALOG_KEY);
+			}
+
+		}
+
+		return super.onOptionsItemSelected(item);
+	}
+}

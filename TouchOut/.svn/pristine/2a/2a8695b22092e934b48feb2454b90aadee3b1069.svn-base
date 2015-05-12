@@ -1,0 +1,29 @@
+package kr.jroad.touchout.view;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.SortingRecentListData;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+public class SortingRecentListView extends FrameLayout {
+
+	public SortingRecentListView(Context context) {
+		super(context);
+		init();
+	}
+	
+	TextView recentPlaceView;
+	
+	private void init(){
+		LayoutInflater.from(getContext()).inflate(R.layout.recent_place_list_item, this);
+		
+		recentPlaceView = (TextView)findViewById(R.id.sorting_recent_place_txt);
+	}
+	
+	public void setData(SortingRecentListData data) {
+		recentPlaceView.setText(data.recentPlace);
+	}
+
+}

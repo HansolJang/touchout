@@ -1,0 +1,7 @@
+package kr.jroad.touchout.data;
+
+import java.util.ArrayList;
+
+public class POIS {
+	public ArrayList<POI> poi;
+}

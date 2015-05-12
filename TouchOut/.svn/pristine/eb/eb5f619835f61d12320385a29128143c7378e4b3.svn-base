@@ -1,0 +1,33 @@
+package kr.jroad.touchout.data;
+
+import com.google.gson.annotations.SerializedName;
+
+public class StoreMenuItem {
+	public int item_id;
+	public int store_id;
+	
+	@SerializedName("name")
+	public String menuName;
+	
+	@SerializedName("amount")
+	public int menuPrice;
+	
+	public String image;
+	
+	
+	public int is_whipping;
+	public boolean whippingEnabled;
+
+	public int is_hot;
+	public boolean isHot;
+	
+	public String size;
+	
+	/////////////////////////view variable
+	public boolean whippingSelected = false;
+	public boolean menuSelected;
+	public int count = 1;
+	public String selectedSize;
+	public boolean isFavorite = false;
+	
+}

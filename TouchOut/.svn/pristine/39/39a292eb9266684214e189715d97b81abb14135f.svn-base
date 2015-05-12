@@ -1,0 +1,116 @@
+package kr.jroad.touchout.manager;
+
+import kr.jroad.touchout.extra.MyApplication;
+import android.content.Context;
+import android.content.SharedPreferences;
+
+
+public class PropertyManager {
+	
+	public interface OnCartChangeListener {
+		public void onCartChangeListener();
+	}
+	
+	OnCartChangeListener cartChangeListener;
+	
+	public void setOnCartChangeListener(OnCartChangeListener listener) {
+		cartChangeListener = listener;
+	}
+	
+	private static PropertyManager instance;
+
+	public static PropertyManager getInstance() {
+		if (instance == null) {
+			instance = new PropertyManager();
+		}
+		return instance;
+	}
+
+	SharedPreferences mPrefs;
+	SharedPreferences.Editor mEditor;
+
+	private static final String PREF_NAME = "my_prefs";
+
+	private PropertyManager() {
+		mPrefs = MyApplication.getContext().getSharedPreferences(PREF_NAME,
+				Context.MODE_PRIVATE);
+		mEditor = mPrefs.edit();
+	}
+	
+	//튜토리얼에 사용
+	private boolean isFirst = true;
+	private static final String FIELD_IS_FIRST = "isFirst";
+	
+	public void setIsFirst(boolean isFirst) {
+		this.isFirst = isFirst;
+		mEditor.putBoolean(FIELD_IS_FIRST, isFirst);
+		mEditor.commit();
+	}
+	
+	public boolean getIsFirst() {
+		return isFirst;
+	}
+
+	private String userId;
+	private static final String FIELD_USER_ID = "userId";
+
+	public void setUserId(String userId) {
+		this.userId = userId;
+		mEditor.putString(FIELD_USER_ID, userId);
+		mEditor.commit();
+	}
+
+	public String getUserId() {
+		if (userId == null) {
+			userId = mPrefs.getString(FIELD_USER_ID, "");
+		}
+		return userId;
+	}
+	
+	public String userName;
+	public static final String FIELD_USER_NAME = "userName";
+	
+	public String getUserName() {
+		return userName;
+	}
+	
+	public void setUserName(String name) {
+		this.userName = name;
+		mEditor.putString(FIELD_USER_NAME, name);
+		mEditor.commit();
+	}
+
+	//이용약관동의
+	public boolean agreement;
+	public static final String FIELD_AGREEMENT = "agreement";
+	
+	public boolean getAgreement() {
+		return agreement;
+	}
+	
+	public void setAgreement(boolean agree) {
+		this.agreement = agree;
+		mEditor.putBoolean(FIELD_AGREEMENT, agree);
+		mEditor.commit();
+	}
+	
+	
+	public int cartItemNumber;
+	public static final String FIELD_CART_ITEM_NUMBER = "cartItemNumber";
+	
+	public int getCartItemNumber() {
+		return cartItemNumber;
+	}
+	public void setCartItemNumber(int count) {
+		this.cartItemNumber = count;
+		mEditor.putInt(FIELD_CART_ITEM_NUMBER, count);
+		mEditor.commit();
+		
+		if(cartChangeListener != null) {
+			cartChangeListener.onCartChangeListener();
+		}
+	}
+	
+	
+	
+}

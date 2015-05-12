@@ -1,0 +1,35 @@
+package kr.jroad.touchout.activity;
+
+import kr.jroad.touchout.fragment.AccountInfoFragment;
+import kr.jroad.touchout.fragment.AccountWithdrawalFragment;
+import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBarActivity;
+
+public class AccountInfoAcitivity extends ActionBarActivity {
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_account_info);
+		
+		AccountInfoFragment f = new AccountInfoFragment();
+		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+		ft.replace(R.id.account_info_container, f);
+		ft.commit();
+		
+	}
+	
+	public void goWithdrawalFragment() {
+		AccountWithdrawalFragment f = new AccountWithdrawalFragment();
+		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+		ft.replace(R.id.account_info_container, f);
+		ft.addToBackStack(null);
+		ft.commit();
+	}
+	
+	public void popWithdrawalFragment() {
+		FragmentManager fm = getSupportFragmentManager();
+		fm.popBackStack();
+	}
+}

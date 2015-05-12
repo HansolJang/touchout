@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/gray_background"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="match_parent"
+        android:layout_height="15dp"
+        android:text="TextView"
+        android:visibility="invisible" />
+    
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/divider_dark" />
+
+    <ExpandableListView
+        android:id="@+id/notice_list"
+        android:layout_width="match_parent"
+        android:listSelector="@drawable/null_image"
+        android:groupIndicator="@drawable/null_image"
+        android:divider="@drawable/divider_dark"
+        android:layout_height="wrap_content" >
+    </ExpandableListView>
+
+</LinearLayout>

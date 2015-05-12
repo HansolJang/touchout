@@ -1,0 +1,46 @@
+package kr.jroad.touchout.view;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.ReviewItem;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
+
+public class ReviewListView extends FrameLayout {
+
+	public ReviewListView(Context context) {
+		super(context);
+		init();
+	}
+	
+	ImageLoader imgLoader;
+	ImageView profileView;
+	TextView nameView;
+	TextView contentView;
+	TextView timeView;
+	ImageView timeIconView;
+	
+	private void init() {
+		LayoutInflater.from(getContext()).inflate(R.layout.review_list_item, this);
+		
+		imgLoader = ImageLoader.getInstance();
+		profileView = (ImageView)findViewById(R.id.review_profile_img);
+		nameView = (TextView)findViewById(R.id.review_name_txt);
+		contentView = (TextView)findViewById(R.id.review_content_txt);
+		timeView = (TextView)findViewById(R.id.review_time_txt);
+		timeIconView = (ImageView)findViewById(R.id.review_time_img);
+	}
+	
+	public void setData(ReviewItem data) {
+		imgLoader.displayImage(data.profileURL, profileView);
+		nameView.setText(data.name);
+		contentView.setText(data.content);
+		timeView.setText(data.time);
+		timeIconView.setImageResource(R.drawable.review_icon_clock);
+	}
+
+}

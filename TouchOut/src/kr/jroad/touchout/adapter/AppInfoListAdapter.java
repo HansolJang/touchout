@@ -1,0 +1,53 @@
+package kr.jroad.touchout.adapter;
+
+import java.util.ArrayList;
+
+import kr.jroad.touchout.view.AppInfoListView;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
+
+public class AppInfoListAdapter extends BaseAdapter {
+	
+	Context mContext;
+	ArrayList<String> items = new ArrayList<String>();
+	
+	public AppInfoListAdapter(Context context) {
+		mContext = context;
+	}
+
+	@Override
+	public int getCount() {
+		return items.size();
+	}
+
+	@Override
+	public Object getItem(int position) {
+		return items.get(position);
+	}
+
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
+	
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		AppInfoListView view;
+		if(convertView == null){
+			view = new AppInfoListView(mContext);
+		} else {
+			view = (AppInfoListView)convertView;
+		}
+		view.setData(items.get(position));
+		return view;
+	}
+
+	public void add(String string) {
+		items.add(string);
+	}
+
+}

@@ -1,0 +1,70 @@
+package kr.jroad.touchout.adapter;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.fragment.TutorialContentFragment;
+import kr.jroad.touchout.fragment.TutorialFinalContentFragment;
+import kr.jroad.touchout.fragment.TutorialFinalContentFragment.OnFacebookListener;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+
+public class TutorialFragmentAdapter extends FragmentPagerAdapter implements OnFacebookListener {
+
+	public interface OnFacebookAdapterListener {
+		public void onFacebookAdapterListener();
+	}
+	
+	OnFacebookAdapterListener facebookListener;
+	
+	public void setOnFacebookAdapterListener(OnFacebookAdapterListener listener) {
+		facebookListener = listener;
+	}
+	
+
+	public TutorialFragmentAdapter(FragmentManager fm) {
+		super(fm);
+	}
+
+	@Override
+	public Fragment getItem(int position) {
+		TutorialContentFragment f = new TutorialContentFragment();
+		Bundle b = new Bundle();
+		
+		switch(position){
+		case 0:
+			b.putInt(TutorialContentFragment.PARAM_TUTORIAL_IMG, R.drawable.ic_launcher);
+			f.setArguments(b);
+			return f;
+		case 1:
+			b.putInt(TutorialContentFragment.PARAM_TUTORIAL_IMG, R.drawable.tutorial_2page);
+			f.setArguments(b);
+			return f;
+		case 2:
+			b.putInt(TutorialContentFragment.PARAM_TUTORIAL_IMG, R.drawable.ic_launcher);
+			f.setArguments(b);
+			return f;
+		case 3:
+			b.putInt(TutorialContentFragment.PARAM_TUTORIAL_IMG, R.drawable.ic_launcher);
+			f.setArguments(b);
+			return f;
+		default :
+			TutorialFinalContentFragment ff = new TutorialFinalContentFragment();
+			ff.setOnFacebookListener(this);
+			return ff;
+		}
+	}
+
+	@Override
+	public int getCount() {
+		return 5;
+	}
+
+	@Override
+	public void onFacebookListener() {
+		if(facebookListener != null) {
+			facebookListener.onFacebookAdapterListener();
+		}
+	}
+
+}

@@ -1,0 +1,28 @@
+package kr.jroad.touchout.data;
+
+import com.google.gson.annotations.SerializedName;
+
+public class NowSaleItem {
+	public int store_id;
+	
+	@SerializedName("store_name")
+    public String storeName;
+    public float latitude;
+    public float longitude;
+    public float distance;
+    public int item_id;
+    public String item_name;
+    
+    public int amount;
+    
+    @SerializedName("image")
+    public String saleImgId;
+    
+    public int is_whipping;
+    public boolean isWhipping;
+    
+    public int is_hot;
+    public boolean isHot;
+    public String size;
+
+}

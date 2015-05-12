@@ -1,0 +1,77 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.adapter.StampListAdapter;
+import kr.jroad.touchout.data.StampItem;
+import kr.jroad.touchout.data.StampResult;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
+
+public class ExtraStampFragment extends Fragment {
+	
+	ListView stampList;
+	StampListAdapter stampAdapter;
+	ActionBar actionBar;
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setHasOptionsMenu(true);
+		actionBar = ((ActionBarActivity)getActivity()).getSupportActionBar();
+		actionBar.setHomeButtonEnabled(true);
+		actionBar.setDisplayShowCustomEnabled(true);
+		actionBar.setBackgroundDrawable(getResources().getDrawable(
+				R.color.main_orange_color));
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_stamp, container, false);
+	}
+	
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+		
+		stampList = (ListView)view.findViewById(R.id.wallet_stamp_list);
+		stampAdapter = new StampListAdapter(getActivity());
+		stampList.setAdapter(stampAdapter);
+		
+		initStampData();
+	}
+	
+	private void initStampData() {
+		NetworkManager.getInstance().getStampData(getActivity(), 1, new OnResultListener<StampResult>() {
+
+			@Override
+			public void onSuccess(StampResult result) {
+				stampAdapter.clear();
+				for(StampItem data : result.result.items) {
+					stampAdapter.add(data);
+				}
+			}
+
+			@Override
+			public void onFail(int code) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+	}
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		actionBar.setTitle("스탬프");
+	}
+}

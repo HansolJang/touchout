@@ -1,0 +1,50 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.R;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+public class TutorialContentFragment extends Fragment {
+
+	public static final String PARAM_TUTORIAL_TEXT = "tutorialText";
+	public static final String PARAM_TUTORIAL_IMG = "tutorialImage";
+	
+	String content;
+	int contentResId;
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		Bundle b = getArguments();
+		if(b != null) {
+			content = b.getString(PARAM_TUTORIAL_TEXT);
+			contentResId = b.getInt(PARAM_TUTORIAL_IMG);
+		}
+	}
+	
+	ImageView tutorialImgView;
+	TextView tutorialTxtView;
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_tutorial_content, container, false);
+	}
+	
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+		
+		tutorialImgView = (ImageView)view.findViewById(R.id.contentImg);
+		
+		tutorialImgView.setImageResource(contentResId);
+	}
+	
+}

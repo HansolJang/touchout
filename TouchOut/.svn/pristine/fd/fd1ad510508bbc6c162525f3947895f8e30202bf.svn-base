@@ -1,0 +1,263 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.PaymentActivity;
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.activity.StoreMenuActivity;
+import kr.jroad.touchout.adapter.FavoriteMenuAdapter;
+import kr.jroad.touchout.adapter.FavoriteMenuAdapter.OnAdapterEditListener;
+import kr.jroad.touchout.adapter.FavoriteMenuAdapter.OnAdapterRemoveListener;
+import kr.jroad.touchout.data.FavoriteItem;
+import kr.jroad.touchout.data.FavoriteResult;
+import kr.jroad.touchout.data.PostResult;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import kr.jroad.touchout.manager.PropertyManager;
+import kr.jroad.touchout.manager.PropertyManager.OnCartChangeListener;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+
+public class FavoriteFragment extends Fragment {
+
+	ListView favoriteMenuList;
+	FavoriteMenuAdapter favoriteAdapter;
+	ImageView cartStrapView;
+	boolean isCartSelected = false;
+	FrameLayout cartLayout;
+
+	TextView cartNumberView;
+	TextView cartAboveNumberView;
+
+	public static final String GO_EDIT_MENU = "editSelectedMenu";
+	public static final String GO_PAYMENT_MENU = "paymentMenu";
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		setHasOptionsMenu(true);
+		super.onCreate(savedInstanceState);
+		
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_favorite, container, false);
+	}
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		favoriteMenuList = (ListView) view.findViewById(R.id.favorite_list);
+		favoriteAdapter = new FavoriteMenuAdapter(getActivity());
+
+		cartNumberView = (TextView) view
+				.findViewById(R.id.favorite_cart_number_view);
+		cartAboveNumberView = (TextView) view
+				.findViewById(R.id.favorite_cart_above_number_view);
+		cartAboveNumberView.setVisibility(ImageView.GONE);
+		cartStrapView = (ImageView) view
+				.findViewById(R.id.favorite_cart_strap_view);
+		cartStrapView.setImageResource(R.drawable.cart_strap);
+		cartLayout = (FrameLayout) view
+				.findViewById(R.id.favorite_cart_container);
+
+		// 누르면 그 하나만 바로 결제! 결제 버튼 눌릴 시 결제 내역 json으로 보내주어야함
+		favoriteMenuList.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				Intent i = new Intent(getActivity(), PaymentActivity.class);
+				FavoriteItem d = (FavoriteItem) favoriteMenuList
+						.getItemAtPosition(position);
+				i.putExtra(GO_PAYMENT_MENU, d);
+				startActivity(i);
+			}
+		});
+
+		// 편집 -> 수정버튼이 눌렸을 경우
+		favoriteAdapter.setOnAdapterEditListener(new OnAdapterEditListener() {
+
+			@Override
+			public void onAdapterEditListener(View v, FavoriteItem data) {
+				Intent i = new Intent(getActivity(), StoreMenuActivity.class);
+				i.putExtra(GO_EDIT_MENU, data);
+				startActivity(i);
+			}
+		});
+
+		// 편집 -> 삭제 버튼이 눌렸을 경우
+		favoriteAdapter
+				.setOnAdapterRemoveListener(new OnAdapterRemoveListener() {
+
+					@Override
+					public void onAdapterRemoveListener(View v,
+							FavoriteItem data) {
+						NetworkManager.getInstance().deleteFavoriteData(getActivity(), data.favorite_id, new OnResultListener<PostResult>() {
+
+							@Override
+							public void onSuccess(PostResult result) {
+								if(result.success == 1) {
+									getFavoriteMenuData();
+								}
+							}
+
+							@Override
+							public void onFail(int code) {
+								
+							}
+						});
+						favoriteAdapter.remove(data);
+						favoriteAdapter.notifyDataSetChanged();
+
+					}
+				});
+
+		favoriteMenuList.setAdapter(favoriteAdapter);
+
+		initCartNumber();
+		setCartNumber();
+		toggleCart();
+		getFavoriteMenuData();
+
+	}
+
+	private void getFavoriteMenuData() {
+		NetworkManager.getInstance().getFavoriteData(getActivity(),
+				new OnResultListener<FavoriteResult>() {
+
+					@Override
+					public void onSuccess(FavoriteResult result) {
+						if (result.success == 1) {
+							for (FavoriteItem d : result.result.items) {
+								favoriteAdapter.add(d);
+							}
+						}
+					}
+
+					@Override
+					public void onFail(int code) {
+						// TODO Auto-generated method stub
+
+					}
+				});
+	}
+	
+//	public void onResume() {
+//		initFavoriteMenuData();
+//	};
+
+	MenuItem menuEdit, menuFinish;
+
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+		super.onCreateOptionsMenu(menu, inflater);
+		inflater.inflate(R.menu.favorite_menu, menu);
+
+		menuEdit = menu.findItem(R.id.favorite_menu_edit);
+		menuFinish = menu.findItem(R.id.favorite_menu_finish);
+		menuFinish.setVisible(false);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId() == R.id.favorite_menu_edit) {
+			favoriteAdapter.setEditable(true);
+			menuEdit.setVisible(false);
+			menuFinish.setVisible(true);
+		} else if (item.getItemId() == R.id.favorite_menu_finish) {
+			favoriteAdapter.setEditable(false);
+			menuEdit.setVisible(true);
+			menuFinish.setVisible(false);
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	
+	private void initCartNumber() {
+		if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+			cartNumberView.setText(PropertyManager.getInstance()
+					.getCartItemNumber() + "");
+			cartAboveNumberView.setText(PropertyManager.getInstance()
+					.getCartItemNumber() + "");
+		} else {
+			cartNumberView.setText("");
+			cartAboveNumberView.setText("");
+		}
+	}
+
+	private void setCartNumber() {
+
+		PropertyManager.getInstance().setOnCartChangeListener(
+				new OnCartChangeListener() {
+
+					@Override
+					public void onCartChangeListener() {
+						if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+							cartNumberView.setText(PropertyManager
+									.getInstance().getCartItemNumber() + "");
+							cartAboveNumberView.setText(PropertyManager
+									.getInstance().getCartItemNumber() + "");
+						} else {
+							cartNumberView.setText("");
+							cartAboveNumberView.setText("");
+						}
+					}
+				});
+	}
+
+	private void toggleCart() {
+		cartStrapView.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				cartAboveNumberView.setVisibility(ImageView.VISIBLE);
+				cartLayout.setVisibility(ImageView.VISIBLE);
+				if (!isCartSelected) {
+					CartFragment f = new CartFragment();
+					FragmentTransaction ft = getChildFragmentManager()
+							.beginTransaction();
+					ft.replace(R.id.favorite_cart_container, f);
+					// 백스텍 안됨 !
+					ft.addToBackStack(null);
+					ft.commit();
+					cartStrapView.setVisibility(ImageView.GONE);
+					cartNumberView.setVisibility(ImageView.GONE);
+				}
+
+			}
+		});
+
+		cartLayout.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (cartStrapView.getVisibility() == ImageView.GONE) {
+					cartLayout.setVisibility(ImageView.GONE);
+					FragmentManager fm = getChildFragmentManager();
+					fm.popBackStack();
+					cartStrapView.setVisibility(ImageView.VISIBLE);
+					cartNumberView.setVisibility(ImageView.VISIBLE);
+					cartAboveNumberView.setVisibility(ImageView.GONE);
+				}
+			}
+		});
+	}
+
+}

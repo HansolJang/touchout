@@ -1,0 +1,108 @@
+package kr.jroad.touchout.view;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.adapter.StampAdapter;
+import kr.jroad.touchout.data.StampData;
+import kr.jroad.touchout.data.StampItem;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+public class StampListView extends FrameLayout {
+	
+	public interface OnDeleteListener {
+		public void onDeleteListener();
+	}
+	public interface GoStoreInfoListener {
+		public void goStoreInfoListener();
+	}
+	
+	OnDeleteListener deleteListener;
+	GoStoreInfoListener infoListener;
+	
+	public void setOnDeleteListener(OnDeleteListener listener) {
+		deleteListener = listener;
+	}
+	
+	public void setGoStoreInfoListener(GoStoreInfoListener listener) {
+		infoListener = listener;
+	}
+
+	public StampListView(Context context) {
+		super(context);
+		init();
+	}
+	
+	ImageView deleteView;
+	TextView storeNameView;
+	TextView stampDescView;
+	GridView stampGridView;
+	StampAdapter stampAdaper;
+	
+	private void init() {
+		LayoutInflater.from(getContext()).inflate(R.layout.stamp_list_item, this);
+		
+		deleteView = (ImageView)findViewById(R.id.stamp_delete_img);
+		deleteView.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if(deleteListener != null) {
+					deleteListener.onDeleteListener();
+				}
+			}
+		});
+		
+		storeNameView = (TextView)findViewById(R.id.stamp_store_name_txt);
+		storeNameView.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if(infoListener != null) {
+					infoListener.goStoreInfoListener();
+				}
+			}
+		});
+		
+		stampDescView = (TextView)findViewById(R.id.stamp_desc_txt);
+		stampGridView = (GridView)findViewById(R.id.stamp_grid_view);
+		stampAdaper = new StampAdapter(getContext());
+		stampGridView.setAdapter(stampAdaper);
+	}
+	
+	
+	public void setData(StampItem data) {
+		if(data.is_used == 0) {
+			data.isUsed = false;
+		} else {
+			data.isUsed = true;
+		}
+		
+		storeNameView.setText(data.storeName);
+		stampDescView.setText(data.stampDesc);
+		
+		stampAdaper.clear();
+		for(int i = 0; i < data.stamp.length; i++) {
+			data.stamp[i] = new StampData();
+			
+			if(i < data.stampCount) {
+				data.stamp[i].stamped = true;
+				data.stamp[i].stampedId = R.drawable.stamped;
+			} else {
+				data.stamp[i].stamped = false;
+				data.stamp[i].unStampedId = R.drawable.unstamped;
+			}
+			stampAdaper.add(data.stamp[i]);
+		}
+		if(data.isUsed) {
+			deleteView.setVisibility(ImageView.VISIBLE);
+		} else {
+			deleteView.setVisibility(ImageView.GONE);
+		}
+	}
+
+}

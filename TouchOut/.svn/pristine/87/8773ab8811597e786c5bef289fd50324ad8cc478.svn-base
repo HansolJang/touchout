@@ -1,0 +1,234 @@
+package kr.jroad.touchout.fragment;
+
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+import com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelSlideListener;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.adapter.HomeCategoryListItemAdapter;
+import kr.jroad.touchout.data.HomeCategoryListItemData;
+import kr.jroad.touchout.manager.PropertyManager;
+import kr.jroad.touchout.manager.PropertyManager.OnCartChangeListener;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+
+public class HomeCategoryFragment extends Fragment {
+
+	 String[] touchoutCategory = new String[] { "커피", "도시락", "피자", "밥버거",
+	 "치킨",
+	 "분식" };
+
+	int[] touchoutCategoryImgId = new int[] { R.drawable.main_coffee,
+			R.drawable.main_lunchbox, R.drawable.main_pizza,
+			R.drawable.main_bobburger, R.drawable.main_chicken,
+			R.drawable.main_snack };
+
+	ListView categoryList;
+	HomeCategoryListItemAdapter categoryAdapter;
+	ImageView cartStrapView;
+	boolean isCartSelected = false;
+	FrameLayout cartLayout;
+	TextView cartNumberView;
+	// TextView cartAboveNumberView;
+	int cartNumber;
+	ActionBar actionBar;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		setHasOptionsMenu(true);
+		actionBar = ((ActionBarActivity) getActivity()).getSupportActionBar();
+
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_home_list_category,
+				container, false);
+	}
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onViewCreated(view, savedInstanceState);
+
+		categoryList = (ListView) view.findViewById(R.id.category_list_view);
+		categoryAdapter = new HomeCategoryListItemAdapter(getActivity());
+		categoryList.setAdapter(categoryAdapter);
+
+		// cartNumberView = (TextView) view
+		// .findViewById(R.id.home_category_cart_number_view);
+		// cartAboveNumberView = (TextView) view
+		// .findViewById(R.id.home_category_cart_above_number_view);
+		// cartAboveNumberView.setVisibility(ImageView.GONE);
+		// cartStrapView = (ImageView) view
+		// .findViewById(R.id.home_category_cart_strap_view);
+		// cartStrapView.setImageResource(R.drawable.cart_strap);
+		cartLayout = (FrameLayout) view.findViewById(R.id.name);
+
+		cartLayout.setVisibility(ImageView.VISIBLE);
+		CartFragment f = new CartFragment();
+		FragmentTransaction ft = getChildFragmentManager().beginTransaction();
+		ft.replace(R.id.name, f);
+		// 백스텍 안됨 !
+		ft.addToBackStack(null);
+		ft.commit();
+
+		SlidingUpPanelLayout slidingLayout = (SlidingUpPanelLayout) view
+				.findViewById(R.id.sliding_layout);
+		slidingLayout.setAnchorPoint(0.3f);
+		slidingLayout.setPanelSlideListener(new PanelSlideListener() {
+			@Override
+			public void onPanelSlide(View panel, float slideOffset) {
+
+			}
+
+			@Override
+			public void onPanelExpanded(View panel) {
+
+			}
+
+			@Override
+			public void onPanelCollapsed(View panel) {
+
+			}
+
+			@Override
+			public void onPanelAnchored(View panel) {
+
+			}
+		});
+
+		// 눌린 카테고리의 화면 보여주기
+		categoryList.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				HomeFragment pf = (HomeFragment) getParentFragment();
+				pf.showCategoryFragment(categoryList
+						.getItemAtPosition(position));
+			}
+		});
+
+		// initCartNumber();
+		// setCartNumber();
+		// toggleCart();
+		initCategoryData();
+
+	}
+
+	private void initCategoryData() {
+		for (int i = 0; i < touchoutCategory.length; i++) {
+			HomeCategoryListItemData data = new HomeCategoryListItemData();
+			data.resId = touchoutCategoryImgId[i];
+			data.category = touchoutCategory[i];
+			categoryAdapter.add(data);
+		}
+	}
+
+	private void initCartNumber() {
+		if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+			cartNumberView.setText(PropertyManager.getInstance()
+					.getCartItemNumber() + "");
+			// cartAboveNumberView.setText(PropertyManager.getInstance()
+			// .getCartItemNumber() + "");
+		} else {
+			cartNumberView.setVisibility(ImageView.GONE);
+			// cartAboveNumberView.setVisibility(ImageView.GONE);
+		}
+	}
+
+	private void setCartNumber() {
+
+		PropertyManager.getInstance().setOnCartChangeListener(
+				new OnCartChangeListener() {
+
+					@Override
+					public void onCartChangeListener() {
+						if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+							cartNumberView.setText(PropertyManager
+									.getInstance().getCartItemNumber() + "");
+							// cartAboveNumberView.setText(PropertyManager
+							// .getInstance().getCartItemNumber() + "");
+						} else {
+							cartNumberView.setVisibility(ImageView.GONE);
+							// cartAboveNumberView.setVisibility(ImageView.GONE);
+						}
+					}
+				});
+	}
+
+	private void toggleCart() {
+		cartStrapView.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+					// cartAboveNumberView.setVisibility(ImageView.VISIBLE);
+				} else {
+					// cartAboveNumberView.setVisibility(ImageView.GONE);
+				}
+
+				cartLayout.setVisibility(ImageView.VISIBLE);
+				if (!isCartSelected) {
+					CartFragment f = new CartFragment();
+					FragmentTransaction ft = getChildFragmentManager()
+							.beginTransaction();
+					ft.replace(R.id.name, f);
+					// 백스텍 안됨 !
+					ft.addToBackStack(null);
+					ft.commit();
+					cartStrapView.setVisibility(ImageView.GONE);
+					cartNumberView.setVisibility(ImageView.GONE);
+				}
+
+			}
+		});
+
+		cartLayout.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (cartStrapView.getVisibility() == ImageView.GONE) {
+					FragmentManager fm = getChildFragmentManager();
+					fm.popBackStack();
+					cartLayout.setVisibility(ImageView.GONE);
+					cartStrapView.setVisibility(ImageView.VISIBLE);
+					if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+						cartNumberView.setVisibility(ImageView.VISIBLE);
+					} else {
+						cartNumberView.setVisibility(ImageView.GONE);
+					}
+					// cartAboveNumberView.setVisibility(ImageView.GONE);
+				}
+			}
+		});
+	}
+	
+	@Override
+	public void onResume() {
+		super.onResume();
+		actionBar.setDisplayShowCustomEnabled(true);
+		actionBar.setBackgroundDrawable(getResources().getDrawable(
+				R.color.main_orange_color));
+		actionBar.setLogo(R.drawable.null_image);
+		actionBar.setCustomView(R.layout.actionbar_home);
+	}
+
+}

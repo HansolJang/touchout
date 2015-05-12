@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/main_blue_color"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/cart_list_store_name_txt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="장바구니"
+        android:typeface="normal"
+        android:textColor="#fff"
+        android:textSize="12sp" />
+
+    <Button
+        android:id="@+id/cart_payment_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:textSize="11sp"
+        android:typeface="sans"
+        android:text="주문하기" />
+
+    <ExpandableListView
+        android:id="@+id/cart_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:textSize="11sp"
+        android:groupIndicator="@null" >
+
+    </ExpandableListView>
+
+    <TextView
+        android:id="@+id/cart_result_price_txt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:typeface="monospace"
+        android:text="TextView"
+        android:textSize="25sp" />
+
+</LinearLayout>

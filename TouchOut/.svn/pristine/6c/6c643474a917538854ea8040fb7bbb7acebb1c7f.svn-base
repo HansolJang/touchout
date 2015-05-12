@@ -1,0 +1,20 @@
+package kr.jroad.touchout.data;
+
+import kr.jroad.touchout.activity.R;
+
+import com.google.gson.annotations.SerializedName;
+
+public class RankingWord {
+	public int rank;
+
+	@SerializedName("searchword")
+	public String keyword;
+
+	// ////////////////////view variable
+
+	public int[] iconId = new int[] { R.drawable.search_icon1,
+			R.drawable.search_icon2, R.drawable.search_icon3,
+			R.drawable.search_icon4, R.drawable.search_icon5,
+			R.drawable.search_icon6, R.drawable.search_icon7,
+			R.drawable.search_icon8, R.drawable.search_icon9 };
+}

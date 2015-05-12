@@ -1,0 +1,70 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.adapter.PaymentHistoryListAdapter;
+import kr.jroad.touchout.data.PaymentHistoryItem;
+import kr.jroad.touchout.data.PaymentHistoryResult;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ExpandableListView;
+
+public class ExtraPaymentHistoryFragment extends Fragment {
+
+	ExpandableListView paymentHistoryList;
+	PaymentHistoryListAdapter paymentHistoryAdapter;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_payment_history, container,
+				false);
+	}
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		paymentHistoryList = (ExpandableListView) view
+				.findViewById(R.id.payment_history_list);
+		paymentHistoryAdapter = new PaymentHistoryListAdapter(getActivity());
+
+		paymentHistoryList.setAdapter(paymentHistoryAdapter);
+
+		initPaymentData();
+
+	}
+
+	private void initPaymentData() {
+		NetworkManager.getInstance().getPaymentHistoryData(getActivity(), 1, new OnResultListener<PaymentHistoryResult>() {
+
+			@Override
+			public void onSuccess(PaymentHistoryResult result) {
+				if(result.success == 1) {
+					paymentHistoryAdapter.clearAll();
+					paymentHistoryAdapter.setPaymentHistoryList(result.result);
+				}
+				
+				for (int i = 0; i < paymentHistoryAdapter.getGroupCount(); i++) {
+					paymentHistoryList.expandGroup(i);
+				}
+			}
+
+			@Override
+			public void onFail(int code) {
+				
+			}
+		});
+		
+	}
+}

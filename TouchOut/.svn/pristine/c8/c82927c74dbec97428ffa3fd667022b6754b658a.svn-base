@@ -1,0 +1,15 @@
+<resources>
+
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="slidingmenu_offset">100dp</dimen>
+    <dimen name="shadow_width">15dp</dimen>
+    <dimen name="cart_height">400dp</dimen>
+    <dimen name="icon_length">14dp</dimen>
+    <dimen name="image_width">120dp</dimen>
+    <dimen name="image_height">80dp</dimen>
+    <dimen name="payment_item_height">40dp</dimen>
+    <dimen name="payment_text_size">13sp</dimen>
+
+</resources>

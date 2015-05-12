@@ -1,0 +1,264 @@
+package kr.jroad.touchout.activity;
+
+import java.util.ArrayList;
+
+import kr.jroad.touchout.adapter.ReviewListAdapter;
+import kr.jroad.touchout.adapter.StoreInfoImageAdapter;
+import kr.jroad.touchout.data.FavoriteItem;
+import kr.jroad.touchout.data.ReviewItem;
+import kr.jroad.touchout.data.ReviewResult;
+import kr.jroad.touchout.data.SortingStore;
+import kr.jroad.touchout.data.SubImageResult;
+import kr.jroad.touchout.fragment.HomeAllStoreFragment;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import kr.jroad.touchout.view.CenterTextActionBarView;
+import kr.jroad.touchout.view.ReviewListHeaderView;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Gravity;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.RatingBar;
+import android.widget.TextView;
+
+import com.handmark.pulltorefresh.library.PullToRefreshListView;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.viewpagerindicator.CirclePageIndicator;
+import com.viewpagerindicator.PageIndicator;
+
+public class StoreInfoActivity extends ActionBarActivity {
+
+	ListView reviewList;
+	ReviewListAdapter reviewAdapter;
+	ReviewListHeaderView reviewHeaderView;
+	PullToRefreshListView pullView;
+	
+	CenterTextActionBarView actionBarView;
+
+	ViewPager storeImagePager;
+	StoreInfoImageAdapter storeImageAdapter;
+	PageIndicator mIndicator;
+	CirclePageIndicator indicator;
+
+	ArrayList<String> subImage = new ArrayList<String>();
+
+	ImageView storeImgView;
+	TextView nameView;
+	RatingBar storeRatingBar;
+	TextView descView;
+	
+	ImageLoader imgLoader;
+	
+	TextView titleView;
+	TextView addressView;
+	TextView phoneView;
+	ImageView phoneIconView;
+
+	FavoriteItem editMenu;
+	SortingStore selectedStore;
+	ActionBar actionBar;
+
+	int storeId;
+
+	/** Called when the activity is first created. */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_store_info);
+		
+		imgLoader = ImageLoader.getInstance();
+		
+		actionBar = getSupportActionBar();
+		actionBar.setHomeButtonEnabled(true);
+		actionBar.setDisplayShowCustomEnabled(true);
+		actionBar.setBackgroundDrawable(getResources().getDrawable(
+				R.color.main_orange_color));
+		actionBarView = new CenterTextActionBarView(StoreInfoActivity.this);
+		actionBar.setTitle("");
+		actionBar.setBackgroundDrawable(getResources().getDrawable(R.color.main_orange_color));
+		actionBar.setCustomView(actionBarView, new ActionBar.LayoutParams(Gravity.CENTER));
+		actionBar.setLogo(R.drawable.back_btn_selector);
+
+		titleView = (TextView)actionBarView.findViewById(R.id.actionbar_title_txt);
+		pullView = (PullToRefreshListView) findViewById(R.id.review_list);
+		reviewHeaderView = new ReviewListHeaderView(StoreInfoActivity.this);
+		reviewList = pullView.getRefreshableView();
+		reviewList.addHeaderView(reviewHeaderView);
+		reviewAdapter = new ReviewListAdapter(StoreInfoActivity.this);
+
+		storeImagePager = (ViewPager) reviewHeaderView
+				.findViewById(R.id.store_info_pager);
+		
+		indicator = (CirclePageIndicator) findViewById(R.id.store_info_indicator);
+		mIndicator = indicator;
+		
+		storeImgView = (ImageView)reviewHeaderView.findViewById(R.id.store_info_head_img);
+		nameView = (TextView)reviewHeaderView.findViewById(R.id.store_info_head_name);
+		storeRatingBar = (RatingBar)reviewHeaderView.findViewById(R.id.store_info_head_rating_bar);
+		descView = (TextView)reviewHeaderView.findViewById(R.id.store_info_head_desc);
+		
+
+		addressView = (TextView) reviewHeaderView
+				.findViewById(R.id.store_info_address_txt);
+		phoneView = (TextView) reviewHeaderView
+				.findViewById(R.id.store_info_phone_txt);
+		phoneIconView = (ImageView) reviewHeaderView
+				.findViewById(R.id.store_info_phone_icon);
+		phoneIconView.setImageResource(R.drawable.ic_launcher);
+
+		// 받아온 store 객체 이용하여 정보 보여주기
+		Intent storeInfo = getIntent();
+
+		// 새로운 번들에 리뷰작성과 맵으로 이동시 필요한 정보 넣음
+		Bundle b = new Bundle();
+		selectedStore = storeInfo
+				.getParcelableExtra(HomeAllStoreFragment.SELECTED_STORE);
+	
+		if (selectedStore != null) {
+			imgLoader.displayImage(selectedStore.image, storeImgView);
+			nameView.setText(selectedStore.name);
+			storeRatingBar.setRating(selectedStore.star);
+			descView.setText(selectedStore.description);
+			addressView.setText(selectedStore.address);
+			phoneView.setText(selectedStore.phone);
+			titleView.setText(selectedStore.name);
+			storeId = selectedStore.store_id;
+			b.putParcelable(HomeAllStoreFragment.SELECTED_STORE, selectedStore);
+			
+			// 이미지 받아오기
+			getSubImage();
+		}
+
+		phoneIconView.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// 매장 정보가 있으면
+				if (selectedStore != null) {
+					Intent i = new Intent(Intent.ACTION_CALL, Uri.parse("tel:"
+							+ selectedStore.phone));
+					startActivity(i);
+				}
+			}
+		});
+
+		Button btnMap = (Button) findViewById(R.id.store_info_show_map_btn);
+		btnMap.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent(StoreInfoActivity.this, MapActivity.class);
+				// 위도경도 putextra 해야함!!
+				if (selectedStore != null) {
+					i.putExtra(HomeAllStoreFragment.SELECTED_STORE,
+							selectedStore);
+				}
+				startActivity(i);
+				overridePendingTransition(0, 0);
+			}
+		});
+
+		Button btnWriteReview = (Button) reviewHeaderView
+				.findViewById(R.id.store_info_write_review_btn);
+		btnWriteReview.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// 리뷰 작성 완료되면 리뷰 생성하고 리스트 새로고침
+				Intent i = new Intent(StoreInfoActivity.this,
+						WriteReviewActivity.class);
+				if (selectedStore != null) {
+					i.putExtra(HomeAllStoreFragment.SELECTED_STORE,
+							selectedStore);
+				}
+				startActivity(i);
+				overridePendingTransition(0, 0);
+			}
+		});
+
+		reviewList.setAdapter(reviewAdapter);
+
+		getReviewData();
+
+	}
+
+	// storeId 받아와야함!
+	private void getReviewData() {
+		NetworkManager.getInstance().getReviewData(this, storeId, 1,
+				new OnResultListener<ReviewResult>() {
+
+					@Override
+					public void onSuccess(ReviewResult result) {
+						if (result.success == 1) {
+							reviewAdapter.clear();
+							for (ReviewItem data : result.result.items) {
+								reviewAdapter.add(data);
+							}
+						}
+					}
+
+					@Override
+					public void onFail(int code) {
+						// TODO Auto-generated method stub
+
+					}
+				});
+	}
+
+	private void getSubImage() {
+		NetworkManager.getInstance().getSubImage(this, storeId,
+				new OnResultListener<SubImageResult>() {
+
+					@Override
+					public void onSuccess(SubImageResult result) {
+						if (result.success == 1) {
+							subImage = result.result.items;
+							if (subImage.size() != 0) {
+								storeImageAdapter = new StoreInfoImageAdapter(
+										getSupportFragmentManager(), subImage);
+								storeImagePager.setAdapter(storeImageAdapter);
+								indicator.setViewPager(storeImagePager);
+								indicator.setSnap(true);
+							}
+						}
+					}
+
+					@Override
+					public void onFail(int code) {
+						// TODO Auto-generated method stub
+
+					}
+				});
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		getReviewData();
+	}
+	
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		overridePendingTransition(0, 0);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId() == android.R.id.home) {
+			finish();
+			overridePendingTransition(0, 0);
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+}

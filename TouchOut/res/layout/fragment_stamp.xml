@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#fff"
+    android:orientation="vertical" >
+
+    <ListView
+        android:id="@+id/wallet_stamp_list"
+        android:layout_width="match_parent"
+        android:listSelector="@drawable/null_image"
+        android:divider="@drawable/null_image"
+        android:layout_height="wrap_content" >
+    </ListView>
+    
+    <kr.jroad.touchout.view.ListEmptyView
+        android:id="@+id/wallet_stamp_empty_view"
+        android:layout_width="match_parent"
+        android:visibility="gone"
+        android:layout_height="match_parent" >
+    </kr.jroad.touchout.view.ListEmptyView>
+
+</FrameLayout>

@@ -1,0 +1,136 @@
+package kr.jroad.touchout.view;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.ReviewItem;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.RatingBar;
+import android.widget.TextView;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
+
+public class ReviewListView extends FrameLayout {
+	
+	public interface OnReviewDeleteListener {
+		public void onReviewDeleteListener(ReviewListView view, ReviewItem data);
+	}
+	
+	OnReviewDeleteListener deleteListener;
+	
+	public void setOnReviewDeleteListener(OnReviewDeleteListener listener) {
+		deleteListener = listener;
+	}
+
+	public ReviewListView(Context context) {
+		super(context);
+		init();
+	}
+
+	ReviewItem data;
+	ImageLoader imgLoader;
+	ImageView profileView;
+	TextView nameView;
+	TextView contentView;
+	TextView timeView;
+	ImageView timeIconView;
+	RatingBar starView;
+	float star;
+	Button btnDelete;
+
+	private void init() {
+		LayoutInflater.from(getContext()).inflate(R.layout.review_list_item,
+				this);
+
+		imgLoader = ImageLoader.getInstance();
+		profileView = (ImageView) findViewById(R.id.review_profile_img);
+		nameView = (TextView) findViewById(R.id.review_name_txt);
+		contentView = (TextView) findViewById(R.id.review_content_txt);
+		timeView = (TextView) findViewById(R.id.review_time_txt);
+		timeIconView = (ImageView) findViewById(R.id.review_time_img);
+		starView = (RatingBar) findViewById(R.id.review_rating_bar);
+		btnDelete = (Button)findViewById(R.id.review_delete_btn);
+		btnDelete.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if(deleteListener != null) {
+					deleteListener.onReviewDeleteListener(ReviewListView.this, data);
+				}
+			}
+		});
+		
+	}
+
+	public void setData(ReviewItem data) {
+		//delete listener 에 보내줄 데이터
+		this.data = data;
+		
+		imgLoader.displayImage(data.profileURL, profileView);
+		nameView.setText(data.name);
+		contentView.setText(data.content);
+		timeView.setText(getTime(data.time));
+		timeIconView.setImageResource(R.drawable.review_icon_clock);
+		// 한명이 등록한 별점은 1~10까지의 정수형으로 받는다
+		star = (float)(data.star) / (float)2.0;
+		starView.setRating(star);
+		
+		// 해당 유저가 쓴 리뷰일 때만 삭제 버튼 보임
+		if(data.is_mine == 1) {
+			btnDelete.setVisibility(ImageView.VISIBLE);
+		} else {
+			btnDelete.setVisibility(ImageView.GONE);
+		}
+		
+	}
+
+	private String getTime(String time) {
+		try {
+			long currentDateMillis = new Date().getTime();
+			// 현재 시간을 밀리세컨드로
+			SimpleDateFormat df = new SimpleDateFormat(
+					"yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+			// 리뷰 생성시간을 밀리세컨드로
+			Date createDate = df.parse(time);
+			//9시간 더한다능
+			long createDateMillis = createDate.getTime();
+			//생성시간과 현재 시간 차이
+			long diffSeconds = (currentDateMillis - createDateMillis) / 1000;
+			long second, min, hour, week = 0;
+			// day를 기준으로 한번 정렬
+			long day = diffSeconds / (60 * 60 * 24);
+			
+			// 1일보다 이전
+			if(day > 0) {
+				week = day / 7;
+				if(week > 0) return week + " weeks ago";
+				else return day + " days ago";
+			} 
+			// 생성한지 1일이 안됨
+			else {
+				second = diffSeconds;
+				min = diffSeconds / 60;
+				hour = min / 60;
+				
+				if(hour > 0) return hour + " hours ago";
+				else if (min > 0) return min + " mins ago";
+				else if (second > 0) return second + " seconds ago";
+				else return "시간정보오류";
+			}
+			
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return "시간정보없음";
+		}
+
+	}
+
+}

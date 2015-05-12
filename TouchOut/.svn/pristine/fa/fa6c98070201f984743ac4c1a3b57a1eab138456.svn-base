@@ -1,0 +1,8 @@
+package kr.jroad.touchout.data;
+
+public class StoreMenuList {
+	public String message;
+	public int page_no;
+	public int item_cnt;
+	public StoreMenu items;
+}

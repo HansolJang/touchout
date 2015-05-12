@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <drawable name="null_image">#00ffffff</drawable>
+    <drawable name="dialog_background">#de000000</drawable>
+	<drawable name="white_img">#ffffff</drawable>
+</resources>

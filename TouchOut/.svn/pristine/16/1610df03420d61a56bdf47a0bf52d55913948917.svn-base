@@ -1,0 +1,90 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.ExtraMyWalletActivity;
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.MileageResult;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class ExtraMileageFragment extends PagerFragment {
+
+	ActionBar actionBar;
+	TextView titleView;
+	View actionBarView;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setHasOptionsMenu(true);
+		actionBar = ((ActionBarActivity) getActivity()).getSupportActionBar();
+		actionBar.setHomeButtonEnabled(true);
+		actionBar.setDisplayShowCustomEnabled(true);
+		actionBar.setBackgroundDrawable(getResources().getDrawable(
+				R.color.main_orange_color));
+		actionBarView = LayoutInflater.from(getActivity()).inflate(
+				R.layout.actionbar_center_text, null);
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_extra_mileage, container,
+				false);
+	}
+
+	TextView mileageView;
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+		titleView = (TextView) actionBarView
+				.findViewById(R.id.actionbar_title_txt);
+		mileageView = (TextView) view.findViewById(R.id.mileage_txt);
+		getMileage();
+
+	}
+	
+	private void getMileage() {
+		NetworkManager.getInstance().getMileageData(getActivity(),
+				new OnResultListener<MileageResult>() {
+
+					@Override
+					public void onSuccess(MileageResult result) {
+						if (result.success == 1) {
+							mileageView.setText(result.result.mileage + "");
+							
+							//액티비티 상단의 마일리지 뷰 세팅
+							((ExtraMyWalletActivity)getActivity()).setMileageView(result.result.mileage);
+						}
+					}
+
+					@Override
+					public void onFail(int code) {
+						Toast.makeText(getActivity(), "마일리지 불러오기에 실패하였습니다!",
+								Toast.LENGTH_SHORT).show();
+					}
+				});
+
+	}
+
+	@Override
+	public void onPageCurrent() {
+		super.onPageCurrent();
+		actionBar.setCustomView(actionBarView, new ActionBar.LayoutParams(
+				Gravity.CENTER));
+
+		titleView.setText("마일리지");
+		getMileage();
+	}
+
+}

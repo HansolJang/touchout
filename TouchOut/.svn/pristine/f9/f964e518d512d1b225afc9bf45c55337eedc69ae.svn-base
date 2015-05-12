@@ -1,0 +1,144 @@
+package kr.jroad.touchout.fragment;
+
+import com.facebook.Session;
+import com.facebook.SessionState;
+import com.facebook.Session.StatusCallback;
+import com.facebook.widget.LoginButton;
+
+import kr.jroad.touchout.activity.AgreementActivity;
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.PostResult;
+import kr.jroad.touchout.dialog.TutorialDialogFragment;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.PropertyManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+public class TutorialFinalContentFragment extends Fragment {
+
+	LoginButton authButton;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_tutorial_final_content,
+				container, false);
+	}
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		authButton = (LoginButton) view
+				.findViewById(R.id.tutorial_facebook_btn);
+
+		authButton.setFragment(getParentFragment());
+		authButton.setSessionStatusCallback(new StatusCallback() {
+
+			@Override
+			public void call(Session session, SessionState state,
+					Exception exception) {
+				if (session.isOpened()) {
+					Toast.makeText(getActivity(), "login...",
+							Toast.LENGTH_SHORT).show();
+					String accessToken = session.getAccessToken();
+					if (accessToken != null && !accessToken.equals("")) {
+						
+						/*
+						 * 일단 계정 생성하여 로그인
+						 * 이용약관에 동의 안하면 바로 계정삭제
+						 * 실패하면 다시 튜토리얼로
+						 */
+						NetworkManager.getInstance().doLogin(getActivity(),
+								accessToken,
+								new OnResultListener<PostResult>() {
+
+									@Override
+									public void onSuccess(PostResult result) {
+										if (result.success == 1) {
+											if (result.result.is_loggedin == 1) {
+												if (result.result.is_new == 1) {
+													PropertyManager.getInstance().setFacebookLogin(true);
+													// 약관 동의
+													Intent i = new Intent(
+															getActivity(),
+															AgreementActivity.class);
+													startActivity(i);
+													// 약관동의 띄우고 튜토리얼 닫기
+													TutorialDialogFragment f = (TutorialDialogFragment) getParentFragment();
+													f.dismiss();
+												} else {
+													PropertyManager.getInstance().setFacebookLogin(true);
+													
+													setRegId();
+													
+													// 로그인 성공
+													TutorialDialogFragment f = (TutorialDialogFragment) getParentFragment();
+													f.dismiss();
+												}
+											} else {
+												// 로그인 실패
+											}
+
+										}
+
+									}
+
+									@Override
+									public void onFail(int code) {
+										//로그인 실패
+										PropertyManager.getInstance().setFacebookLogin(false);
+									}
+								});
+
+					}
+				}
+			}
+		});
+	}
+	
+	private void setRegId() {
+		String regId = PropertyManager.getInstance().getRegistrationId();
+		if(regId != null && !regId.equals("")) {
+			NetworkManager.getInstance().setRegId(getActivity(), regId, new OnResultListener<PostResult>() {
+
+				@Override
+				public void onSuccess(PostResult result) {
+					if(result.success == 1) {
+
+					}
+				}
+
+				@Override
+				public void onFail(int code) {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+		}
+	}
+	
+	
+//	tutorial fragment 에서 받음 야매임
+//	@Override
+//	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//		super.onActivityResult(requestCode, resultCode, data);
+//		if (Session.getActiveSession() != null) {
+//			Session.getActiveSession().onActivityResult(getActivity(),
+//					requestCode, resultCode, data);
+//		}
+//	}
+
+}

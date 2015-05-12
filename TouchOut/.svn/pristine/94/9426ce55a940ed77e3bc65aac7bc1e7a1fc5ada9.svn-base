@@ -1,0 +1,16 @@
+package kr.jroad.touchout.activity;
+
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+
+public class MapActivity extends ActionBarActivity {
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+	    super.onCreate(savedInstanceState);
+	    setContentView(R.layout.activity_map);
+	
+	    //매장의 위도경도 받아와 위치 설정
+	}
+
+}

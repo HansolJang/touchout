@@ -1,0 +1,91 @@
+package kr.jroad.touchout.view;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.ReviewItem;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
+
+public class ReviewListView extends FrameLayout {
+
+	public ReviewListView(Context context) {
+		super(context);
+		init();
+	}
+
+	ImageLoader imgLoader;
+	ImageView profileView;
+	TextView nameView;
+	TextView contentView;
+	TextView timeView;
+	ImageView timeIconView;
+
+	private void init() {
+		LayoutInflater.from(getContext()).inflate(R.layout.review_list_item,
+				this);
+
+		imgLoader = ImageLoader.getInstance();
+		profileView = (ImageView) findViewById(R.id.review_profile_img);
+		nameView = (TextView) findViewById(R.id.review_name_txt);
+		contentView = (TextView) findViewById(R.id.review_content_txt);
+		timeView = (TextView) findViewById(R.id.review_time_txt);
+		timeIconView = (ImageView) findViewById(R.id.review_time_img);
+	}
+
+	public void setData(ReviewItem data) {
+		imgLoader.displayImage(data.profileURL, profileView);
+		nameView.setText(data.name);
+		contentView.setText(data.content);
+		setTimeView(data.time);
+		timeIconView.setImageResource(R.drawable.review_icon_clock);
+	}
+
+	private void setTimeView(String time) {
+		try {
+			// 현재 시간을 밀리세컨드로
+			long currentDateMillis = new Date().getTime();
+			SimpleDateFormat df = new SimpleDateFormat();
+			//리뷰 생성시간을 밀리세컨드로
+			long createDateMillis = df.parse(time).getTime();
+			
+			long diffMillis = currentDateMillis - createDateMillis;
+			
+			//1분
+			if(diffMillis < 600000) {
+				//1초로 나누기
+				timeView.setText((int)(diffMillis/1000) + "초 전");
+			}
+			//1시간
+			else if(diffMillis < 3600000) {
+				//1분으로 나누기
+				timeView.setText((int)(diffMillis/600000) + "분 전");
+			}
+			//1일
+			else if(diffMillis < 86400000) {
+				//1시간으로 나누기
+				timeView.setText((int)(diffMillis/3600000) + "시간 전");
+			}
+			//1주
+			else if(diffMillis < 604800000) {
+				//1일로 나누기
+				timeView.setText((int)(diffMillis/86400000) + "일 전");
+			} else {
+				//1주로 나누기
+				timeView.setText((int)(diffMillis/604800000) + "주 전");
+			}
+			
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}

@@ -1,0 +1,27 @@
+package kr.jroad.touchout.view;
+
+import kr.jroad.touchout.activity.R;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+public class WheelNumberItemView extends FrameLayout {
+
+	public WheelNumberItemView(Context context) {
+		super(context);
+		init();
+	}
+	
+	TextView wheelNumberView;
+	
+	private void init() {
+		LayoutInflater.from(getContext()).inflate(R.layout.wheel_number_item, this);
+		
+		wheelNumberView = (TextView)findViewById(R.id.wheel_number_txt);
+	}
+	
+	public void setData(int min) {
+		wheelNumberView.setText(min+"");
+	}
+}

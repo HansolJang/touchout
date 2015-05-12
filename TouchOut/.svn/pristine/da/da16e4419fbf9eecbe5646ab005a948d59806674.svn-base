@@ -1,0 +1,44 @@
+package kr.jroad.touchout.activity;
+
+import kr.jroad.touchout.adapter.TermsListAdapter;
+import kr.jroad.touchout.manager.PropertyManager;
+import android.support.v7.app.ActionBarActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ExpandableListView;
+import android.os.Bundle;
+
+public class AgreementActivity extends ActionBarActivity {
+
+	ExpandableListView termsList;
+	TermsListAdapter termsAdapter;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+	    super.onCreate(savedInstanceState);
+	    setContentView(R.layout.activity_agreement);
+	    getSupportActionBar().setDisplayShowCustomEnabled(true);
+	    getSupportActionBar().setLogo(R.drawable.null_image);
+	    getSupportActionBar().setTitle("이용약관동의");
+	    
+	    termsList = (ExpandableListView)findViewById(R.id.agreement_terms_list);
+	    termsAdapter = new TermsListAdapter(AgreementActivity.this);
+	    
+	    termsList.setAdapter(termsAdapter);
+	    
+	    termsAdapter.add("이용약관동의", "내용1");
+	    termsAdapter.add("개인정보 수집 및 이용안내 동의", "내용2");
+	    termsAdapter.add("위치기반 서비스 이용약관 동의", "내용3");
+	    
+	    Button btnAgree = (Button)findViewById(R.id.agreement_btn);
+	    btnAgree.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				PropertyManager.getInstance().setAgreement(true);
+				finish();
+			}
+		});
+	}
+
+}

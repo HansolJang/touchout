@@ -1,0 +1,263 @@
+package kr.jroad.touchout.view;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.StoreMenuItem;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
+
+public class MenuListView extends FrameLayout {
+
+	public interface OnMenuClickListner {
+		public void onFavoriteSelectListener(MenuListView view,
+				StoreMenuItem data);
+
+		public void onAddCartListener(MenuListView view, StoreMenuItem data);
+
+		public void onCountPlusListener(MenuListView view, StoreMenuItem data);
+
+		public void onCountMinusListener(MenuListView view, StoreMenuItem data);
+
+		public void onWhippingSelectListener(MenuListView view,
+				StoreMenuItem data);
+
+		public void onPaymentListener(MenuListView view, StoreMenuItem data);
+
+		public void onSizeRegularListener(MenuListView view, StoreMenuItem data);
+
+		public void onSizeLarageListener(MenuListView view, StoreMenuItem data);
+	}
+
+	// 받을 이벤트들에 달 리스너 인터페이스 정의
+	OnMenuClickListner favoriteListener;
+	OnMenuClickListner cartListener;
+	OnMenuClickListner plusListener;
+	OnMenuClickListner minusListener;
+	OnMenuClickListner whippingListener;
+	OnMenuClickListner paymentListener;
+	OnMenuClickListner regularListener;
+	OnMenuClickListner largeListener;
+
+	public void setOnMenuClickListener(OnMenuClickListner listener) {
+		favoriteListener = listener;
+		cartListener = listener;
+		plusListener = listener;
+		minusListener = listener;
+		whippingListener = listener;
+		paymentListener = listener;
+		regularListener = listener;
+		largeListener = listener;
+	}
+
+	Context mContext;
+	ArrayList<StoreMenuItem> items = new ArrayList<StoreMenuItem>();
+	
+	public MenuListView(Context context) {
+		super(context);
+		init();
+	}
+
+	StoreMenuItem data;
+
+	DecimalFormat thousandFormat = new DecimalFormat("#,###");
+	
+	boolean isHot;
+	LinearLayout menuLayout;
+	ImageView menuImgView;
+	TextView menuNameView;
+	TextView menuPriceView;
+	LinearLayout menuDetailLayout;
+	TextView menuWhippingText;
+	CheckBox menuWhippingCheckbox;
+	TextView menuAmountView;
+	ImageView menuFavoriteIconView;
+	ImageLoader imgLoader;
+	RadioGroup sizeRadioGroup;
+	RadioButton regularBtn;
+	RadioButton largeBtn;
+
+	private void init() {
+		LayoutInflater.from(getContext())
+				.inflate(R.layout.menu_list_item, this);
+
+		menuLayout = (LinearLayout) findViewById(R.id.menu_layout);
+		menuImgView = (ImageView) findViewById(R.id.menu_img);
+		menuNameView = (TextView) findViewById(R.id.menu_name_txt);
+		menuPriceView = (TextView) findViewById(R.id.menu_price_txt);
+		menuDetailLayout = (LinearLayout) findViewById(R.id.menu_detail_layout);
+		menuWhippingText = (TextView) findViewById(R.id.menu_whipping_txt);
+		menuWhippingCheckbox = (CheckBox) findViewById(R.id.menu_whipping_checkbox);
+		menuAmountView = (TextView) findViewById(R.id.menu_amount_txt);
+		menuFavoriteIconView = (ImageView) findViewById(R.id.menu_favorite_img);
+		sizeRadioGroup = (RadioGroup) findViewById(R.id.menu_size_radio_group);
+		regularBtn = (RadioButton) findViewById(R.id.menu_size_regular_btn);
+		largeBtn = (RadioButton) findViewById(R.id.menu_size_large_btn);
+		imgLoader = ImageLoader.getInstance();
+
+		menuWhippingCheckbox
+				.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+					@Override
+					public void onCheckedChanged(CompoundButton buttonView,
+							boolean isChecked) {
+						if (whippingListener != null) {
+							whippingListener.onWhippingSelectListener(
+									MenuListView.this, data);
+						}
+					}
+				});
+
+		Button btnMenuAmountMinus = (Button) findViewById(R.id.menu_amount_minus_btn);
+		btnMenuAmountMinus.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (minusListener != null) {
+					minusListener.onCountMinusListener(MenuListView.this, data);
+				}
+			}
+		});
+
+		Button btnMenuAmountPlus = (Button) findViewById(R.id.menu_amount_plus_btn);
+		btnMenuAmountPlus.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (plusListener != null) {
+					plusListener.onCountPlusListener(MenuListView.this, data);
+				}
+			}
+		});
+
+		sizeRadioGroup
+				.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+
+					@Override
+					public void onCheckedChanged(RadioGroup group, int checkedId) {
+						switch (checkedId) {
+						case R.id.menu_size_regular_btn:
+							if (regularListener != null) {
+								regularListener.onSizeRegularListener(
+										MenuListView.this, data);
+							}
+							break;
+						case R.id.menu_size_large_btn:
+							if (largeListener != null) {
+								largeListener.onSizeLarageListener(
+										MenuListView.this, data);
+							}
+							break;
+						}
+					}
+				});
+
+		menuFavoriteIconView.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (favoriteListener != null) {
+					favoriteListener.onFavoriteSelectListener(
+							MenuListView.this, data);
+				}
+			}
+		});
+
+		Button btnMenuCart = (Button) findViewById(R.id.menu_cart_btn);
+		btnMenuCart.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (cartListener != null) {
+					cartListener.onAddCartListener(MenuListView.this, data);
+				}
+			}
+		});
+
+		Button btnMenuPayment = (Button) findViewById(R.id.menu_payment_btn);
+		btnMenuPayment.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (paymentListener != null) {
+					paymentListener.onPaymentListener(MenuListView.this, data);
+				}
+			}
+		});
+
+	}
+
+	public void setData(StoreMenuItem data) {
+		this.data = data;
+		if (data.is_whipping == 0) {
+			data.whippingEnabled = false;
+		} else {
+			data.whippingEnabled = true;
+		}
+		
+		if(data.is_hot == 0) {
+			data.isHot = false;
+		} else {
+			data.isHot = true;
+		}
+		imgLoader.displayImage(data.image, menuImgView);
+		menuNameView.setText(data.menuName);
+		
+		String thousandPrice = thousandFormat.format(data.menuPrice);
+		menuPriceView.setText(thousandPrice);
+
+		if (data.menuSelected) {
+			menuDetailLayout.setVisibility(VISIBLE);
+			if (data.whippingEnabled) {
+				menuWhippingText.setEnabled(true);
+				menuWhippingCheckbox.setEnabled(true);
+			} else {
+				menuWhippingText.setEnabled(false);
+				menuWhippingCheckbox.setEnabled(false);
+			}
+
+			if (data.isFavorite) {
+				menuFavoriteIconView.setImageResource(R.drawable.menu_icon_favorite_on);
+			} else {
+				menuFavoriteIconView.setImageResource(R.drawable.menu_icon_favorite_default);
+			}
+
+			menuAmountView.setText(data.count + "");
+
+			if (data.selectedSize == null) {
+
+				if (data.size.equalsIgnoreCase("R")) {
+					data.selectedSize = "R";
+					largeBtn.setEnabled(false);
+					regularBtn.setEnabled(true);
+				} else if (data.size.equalsIgnoreCase("L")) {
+					data.selectedSize = "L";
+					regularBtn.setEnabled(false);
+					largeBtn.setEnabled(true);
+				} else {
+					data.selectedSize = "R";
+					regularBtn.setEnabled(true);
+					largeBtn.setEnabled(true);
+				}
+			}
+
+		} else {
+			menuDetailLayout.setVisibility(GONE);
+		}
+	}
+
+}

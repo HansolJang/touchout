@@ -1,0 +1,38 @@
+package kr.jroad.touchout.view;
+
+import kr.jroad.touchout.activity.R;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class SortingStoreActionBar extends FrameLayout {
+
+	public SortingStoreActionBar(Context context) {
+		super(context);
+		init();
+	}
+	
+	ImageView gpsIconView;
+	TextView currentLocationTxtView;
+
+	private void init() {
+		LayoutInflater.from(getContext()).inflate(R.layout.actionbar_sorting_store, this);
+		
+//		gpsIconView = (ImageView)findViewById(R.id.sorting_actionbar_gps_img);
+//		gpsIconView.setOnClickListener(new View.OnClickListener() {
+//			
+//			@Override
+//			public void onClick(View v) {
+//				Toast.makeText(getContext(), "gps refresh needed", Toast.LENGTH_LONG).show();
+//			}
+//		});
+//		
+//		currentLocationTxtView = (TextView)findViewById(R.id.current_location_txt);
+		
+	}
+
+}

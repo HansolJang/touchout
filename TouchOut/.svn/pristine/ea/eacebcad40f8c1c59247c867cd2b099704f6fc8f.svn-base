@@ -1,0 +1,98 @@
+package kr.jroad.touchout.manager;
+
+import kr.jroad.touchout.extra.MyApplication;
+import android.content.Context;
+import android.content.SharedPreferences;
+
+
+public class PropertyManager {
+	
+	public interface OnCartChangeListener {
+		public void onCartChangeListener();
+	}
+	
+	OnCartChangeListener cartChangeListener;
+	
+	public void setOnCartChangeListener(OnCartChangeListener listener) {
+		cartChangeListener = listener;
+	}
+	
+	private static PropertyManager instance;
+
+	public static PropertyManager getInstance() {
+		if (instance == null) {
+			instance = new PropertyManager();
+		}
+		return instance;
+	}
+
+	SharedPreferences mPrefs;
+	SharedPreferences.Editor mEditor;
+
+	private static final String PREF_NAME = "my_prefs";
+
+	private PropertyManager() {
+		mPrefs = MyApplication.getContext().getSharedPreferences(PREF_NAME,
+				Context.MODE_PRIVATE);
+		mEditor = mPrefs.edit();
+	}
+	
+	public int cartItemNumber;
+	public static final String FIELD_CART_ITEM_NUMBER = "cartItemNumber";
+	
+	public int getCartItemNumber() {
+		return cartItemNumber;
+	}
+	public void setCartItemNumber(int count) {
+		this.cartItemNumber = count;
+		mEditor.putInt(FIELD_CART_ITEM_NUMBER, count);
+		mEditor.commit();
+		
+		if(cartChangeListener != null) {
+			cartChangeListener.onCartChangeListener();
+		}
+	}
+	
+	//facebookLogin이 true면 
+	public boolean facebookLogin;
+	public static final String FIELD_FACEBOOK_LOGIN = "facebookLogin";
+
+	public boolean isFacebookLogin() {
+		return facebookLogin;
+	}
+	
+	public void setFacebookLogin(boolean isLogin) {
+		this.facebookLogin = isLogin;
+		mEditor.putBoolean(FIELD_FACEBOOK_LOGIN, isLogin);
+		mEditor.commit();
+	}
+
+	//gcm regid
+	private String regId;
+	public static final String FIELD_REG_ID = "regid";
+	public void setRegistrationId(String regid) {
+		this.regId = regid;
+		mEditor.putString(FIELD_REG_ID, regid);
+		mEditor.commit();
+	}
+	
+	public String getRegistrationId() {
+		if (regId == null) {
+			regId = mPrefs.getString(FIELD_REG_ID, "");
+		}
+		return regId;
+	}
+	
+	//유저가 픽업완료
+	private boolean isPickUp;
+	public static final String FIELD_IS_PICKUP = "isPickUp";
+	public boolean isPickUp() {
+		return isPickUp;
+	}
+	
+	public void setIsPickUp(boolean isPickUp) {
+		this.isPickUp = isPickUp;
+		mEditor.putBoolean(FIELD_IS_PICKUP, isPickUp);
+		mEditor.commit();
+	}
+}

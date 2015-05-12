@@ -1,0 +1,14 @@
+package kr.jroad.touchout.data;
+
+public class PostMessage {
+	public String message;
+	
+	//장바구니 수정삭제 시 받을 장바구니 내의 아이템 개수
+	public int item_cnt;
+	
+	/*로그인 상태 - 성공(자동로그인 = isloggedin =1, isnew=0), 등록(이용약관 , isloggedin = 1, isnew = 1)
+	* 실패(이동x => isloggedin = 0)
+	*/
+	public int is_loggedin;
+	public int is_new;
+}

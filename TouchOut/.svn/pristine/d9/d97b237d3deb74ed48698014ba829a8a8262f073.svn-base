@@ -1,0 +1,132 @@
+package kr.jroad.touchout.activity;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
+
+import kr.jroad.touchout.adapter.TabsAdapter;
+import kr.jroad.touchout.data.ProfileResult;
+import kr.jroad.touchout.fragment.ExtraMileageFragment;
+import kr.jroad.touchout.fragment.ExtraPaymentHistoryFragment;
+import kr.jroad.touchout.fragment.ExtraStampFragment;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TabHost;
+import android.widget.TabHost.OnTabChangeListener;
+import android.widget.TextView;
+
+public class ExtraMyWalletActivity extends ActionBarActivity {
+	
+	ActionBar actionBar;
+	
+	TabHost tabHost;
+	ViewPager pager;
+	TabsAdapter tabAdapter;
+	ImageLoader imgLoader;
+	
+	ImageView profileView;
+	TextView facebookIDView;
+	TextView mileageView;
+	TextView stampStoreView;
+	
+	
+	public static final String MY_PAGE_TAB1_TAG = "stampTab";
+	public static final String MY_PAGE_TAB2_TAG = "mileageTaB";
+	public static final String MY_PAGE_TAB3_TAG = "paymentHistoryTab";	
+//	private static final String MY_PAGE_TAB_TAG = "currentTab";
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_extra_my_wallet);
+		
+		imgLoader = ImageLoader.getInstance();
+		
+		actionBar = getSupportActionBar();
+		actionBar.setHomeButtonEnabled(true);
+		actionBar.setDisplayHomeAsUpEnabled(true);
+		actionBar.setDisplayShowHomeEnabled(false);
+		actionBar.setDisplayShowCustomEnabled(true);
+		actionBar.setBackgroundDrawable(getResources().getDrawable(
+				R.color.main_orange_color));
+		actionBar.setTitle("");
+		actionBar.setHomeAsUpIndicator(R.drawable.back_btn_selector);
+		
+		profileView = (ImageView)findViewById(R.id.wallet_profile_img);
+		facebookIDView = (TextView)findViewById(R.id.wallet_id_txt);
+		mileageView = (TextView)findViewById(R.id.wallet_mileage_txt);
+		stampStoreView = (TextView)findViewById(R.id.wallet_stamp_store_txt);
+		mileageView.setVisibility(ImageView.INVISIBLE);
+		stampStoreView.setVisibility(ImageView.INVISIBLE);
+		
+		setUserProfileInfo();
+		
+		tabHost = (TabHost)findViewById(R.id.my_page_tab_host);
+		tabHost.setup();
+		
+		pager = (ViewPager)findViewById(R.id.my_wallet_pager);
+		tabAdapter = new TabsAdapter(ExtraMyWalletActivity.this, getSupportFragmentManager(), tabHost, pager);
+		
+		View tab1View = LayoutInflater.from(this).inflate(R.layout.mywallet_tab1_stamp, null);
+		View tab2View = LayoutInflater.from(this).inflate(R.layout.mywallet_tab2_mileage, null);
+		View tab3View = LayoutInflater.from(this).inflate(R.layout.mywallet_tab3_payment_history, null);
+		
+		tabAdapter.addTab(tabHost.newTabSpec(MY_PAGE_TAB1_TAG).setIndicator(tab1View), ExtraStampFragment.class, null);
+		tabAdapter.addTab(tabHost.newTabSpec(MY_PAGE_TAB2_TAG).setIndicator(tab2View), ExtraMileageFragment.class, null);
+		tabAdapter.addTab(tabHost.newTabSpec(MY_PAGE_TAB3_TAG).setIndicator(tab3View), ExtraPaymentHistoryFragment.class, null);
+		
+		tabAdapter.setOnTabChangedListener(new OnTabChangeListener() {
+			
+			@Override
+			public void onTabChanged(String tabId) {
+				
+			}
+		});
+
+	}
+	
+	public void setMileageView(int mileage) {
+		mileageView.setVisibility(ImageView.VISIBLE);
+		mileageView.setText(mileage +"p");
+	}
+	
+	public void setStampStoreView(int storeNumber) {
+		stampStoreView.setVisibility(ImageView.VISIBLE);
+		stampStoreView.setText(storeNumber + "개");
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if(item.getItemId() == android.R.id.home) {
+			finish();
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+	
+	private void setUserProfileInfo() {
+		NetworkManager.getInstance().getUserProfile(this, new OnResultListener<ProfileResult>() {
+			
+			@Override
+			public void onSuccess(ProfileResult result) {
+				if(result.success == 1) {
+					facebookIDView.setText(result.result.items.name);
+					imgLoader.displayImage(result.result.items.image, profileView);
+				}
+			}
+			
+			@Override
+			public void onFail(int code) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+	}
+	
+}

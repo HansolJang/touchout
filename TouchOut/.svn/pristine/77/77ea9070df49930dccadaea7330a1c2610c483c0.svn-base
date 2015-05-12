@@ -1,0 +1,51 @@
+package kr.jroad.touchout.adapter;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.fragment.TutorialContentFragment;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+
+public class TutorialFragmentAdapter extends FragmentPagerAdapter {
+
+	String[] text = {"터치아웃과 테이크아웃도 이제 간편하게, 줄서서 기다리는 일은 이제 끝!",
+			"자주가는 매장과 메뉴를 등록하여 주문을 더 간편하게!", 
+			"뚱뚱한 지갑은 그만! 스탬프도 터치아웃으로 한번에!",
+			"가맹점 어디에서나 쓸 수 있는 마일리지 적립까지!"};
+	
+	
+	public TutorialFragmentAdapter(FragmentManager fm) {
+		super(fm);
+	}
+
+	@Override
+	public Fragment getItem(int position) {
+		TutorialContentFragment f = new TutorialContentFragment();
+		Bundle b = new Bundle();
+		
+		switch(position){
+		case 0:
+			b.putString(TutorialContentFragment.PARAM_TUTORIAL_TEXT, text[0]);
+			break;
+		case 1:
+			b.putString(TutorialContentFragment.PARAM_TUTORIAL_TEXT, text[1]);
+			break;
+		case 2:
+			b.putString(TutorialContentFragment.PARAM_TUTORIAL_TEXT, text[2]);
+			break;
+		case 3:
+			b.putString(TutorialContentFragment.PARAM_TUTORIAL_TEXT, text[3]);
+			break;
+		}
+		b.putInt(TutorialContentFragment.PARAM_TUTORIAL_IMG, R.drawable.ic_launcher);
+		f.setArguments(b);
+		return f;
+	}
+
+	@Override
+	public int getCount() {
+		return 4;
+	}
+
+}

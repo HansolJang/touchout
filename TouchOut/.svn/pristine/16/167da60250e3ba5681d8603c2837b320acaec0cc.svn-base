@@ -1,0 +1,50 @@
+package kr.jroad.touchout.activity;
+
+import kr.jroad.touchout.fragment.AppInfoDetailFragment;
+import kr.jroad.touchout.fragment.AppInfoMainFragment;
+import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBarActivity;
+
+public class AppInfoActivity extends ActionBarActivity {
+	
+	public static final String APP_INFO_DETAIL_CONTENT = "detailContent";
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_app_info);
+		
+		AppInfoMainFragment f = new AppInfoMainFragment();
+		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+		ft.replace(R.id.app_info_container, f);
+		ft.commit();
+	}
+	
+	public void changeDetail(int position) {
+		
+		AppInfoDetailFragment detailFragment = new AppInfoDetailFragment();
+		Bundle b = new Bundle();
+		
+		switch(position) {
+		case 0 :
+			b.putString(APP_INFO_DETAIL_CONTENT, "이용약관");
+			break;
+		case 1 :
+			b.putString(APP_INFO_DETAIL_CONTENT, "개인정보 취급 방침");
+			break;
+		case 2 :
+			b.putString(APP_INFO_DETAIL_CONTENT, "위치기반 서비스 약관");
+			break;
+		case 3 :
+			b.putString(APP_INFO_DETAIL_CONTENT, "오픈소스 라이센스");
+			break;
+		}
+		
+		detailFragment.setArguments(b);
+		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+		ft.replace(R.id.app_info_container, detailFragment);
+		ft.addToBackStack(null);
+		ft.commit();
+	}
+}

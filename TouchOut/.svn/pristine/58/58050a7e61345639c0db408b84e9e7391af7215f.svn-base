@@ -1,0 +1,28 @@
+package kr.jroad.touchout.data;
+
+import com.google.gson.annotations.SerializedName;
+
+public class StampItem {
+	public int userstamp_id;
+	public int stamp_id;
+	public int store_id;
+	
+	@SerializedName("store_name")
+	public String storeName;
+	
+	@SerializedName("count")
+	public int stampCount;
+	
+	public int is_used;
+	public boolean isUsed;
+	
+	public String create_date;
+	public String delete_date; //스탬프 만료 날짜
+	public String reward;
+	
+	@SerializedName("description")
+	public String stampDesc;
+	
+	//////////////////////////view variable
+	public StampData[] stamp = new StampData[10];
+}

@@ -1,0 +1,58 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.HomeCategoryListItemData;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+public class HomeFragment extends Fragment {
+
+	public static final String SELECTED_CATEGORY = "selectedCategory";
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setHasOptionsMenu(true);
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_home, container, false);
+	}
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		HomeCategoryFragment f = new HomeCategoryFragment();
+		FragmentTransaction ft = getChildFragmentManager().beginTransaction();
+		ft.replace(R.id.sorting_store_container, f);
+		ft.commit();
+
+	}
+
+	public void showCategoryFragment(Object data) {
+		// 카테고리 눌리면 그 객체 받아와서 다시 view pager indicator 탭으로 전달
+		HomeSortingStoreFragment fragment = new HomeSortingStoreFragment();
+		Bundle b = new Bundle();
+		HomeCategoryListItemData d = (HomeCategoryListItemData) data;
+		b.putParcelable(SELECTED_CATEGORY, d);
+		fragment.setArguments(b);
+		FragmentTransaction ft = getChildFragmentManager().beginTransaction();
+		// backstack 안됌!
+		ft.addToBackStack(null);
+		ft.replace(R.id.sorting_store_container, fragment);
+		ft.commit();
+	}
+	
+	public void backToCategory() {
+		getChildFragmentManager().popBackStack();
+	}
+	
+}

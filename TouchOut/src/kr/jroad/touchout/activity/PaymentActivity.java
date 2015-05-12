@@ -1,0 +1,397 @@
+package kr.jroad.touchout.activity;
+
+import java.text.DecimalFormat;
+import java.util.TimerTask;
+
+import kankan.wheel.widget.OnWheelChangedListener;
+import kankan.wheel.widget.OnWheelScrollListener;
+import kankan.wheel.widget.WheelView;
+import kr.jroad.touchout.adapter.WheelNumberViewAdapter;
+import kr.jroad.touchout.data.FavoriteItem;
+import kr.jroad.touchout.data.MileageResult;
+import kr.jroad.touchout.data.OrderList;
+import kr.jroad.touchout.data.PaymentResult;
+import kr.jroad.touchout.data.StoreResult;
+import kr.jroad.touchout.dialog.PrepareDialogFragment;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import kr.jroad.touchout.view.CenterTextActionBarView;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBar.LayoutParams;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class PaymentActivity extends ActionBarActivity {
+
+	Integer[] minutes = new Integer[] { 0, 5, 10, 15, 20, 25, 30, 35, 40, 45,
+			50, 55 };
+
+	FavoriteItem favoriteMenu;
+
+	TextView actionBarTitleView;
+	
+	TextView menuView;
+	TextView storeView;
+	TextView addressView;
+	TextView totalPriceView; // 전체결제할 금액
+	Button btnUseStamp;
+	TextView mileageView;
+	LinearLayout mileageDetailLayout;
+	LinearLayout mileageLayout;
+	TextView userMileageView; // 가지고 있는 마일리지
+	EditText useMileageEdit;
+	Button btnUseMileage;
+	TextView resultPriceView; // 할인 받은 최종 금액
+	WheelView wheelView;
+//	CheckBox cardCheckBox;
+//	CheckBox phoneCheckBox;
+	TextView addMileageView; // 결제 후 적립될 마일리지
+	Button btnPayment;
+	RadioGroup payTypeRadioGroup;
+	
+	DecimalFormat thousandFormat = new DecimalFormat("#,###");
+	
+	int mileage = -1;
+	//default 카드 결제
+	int payType = 1;
+	int orderId;
+	//주문 접수 시간 휠 돌릴 때 받을 변수, 현재시간이 디폴트
+	int minute = 0;
+
+	ActionBar actionBar;
+	CenterTextActionBarView actionBarView;
+
+	public static final String DIALOG_PREPARE_TAG = "prepareDialog";
+
+	public static final String PAYMENT_ORDER_DETAILS = "paymentOrderDetails";
+
+	/** Called when the activity is first created. */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_payment);
+		actionBar = getSupportActionBar();
+		actionBarView = new CenterTextActionBarView(this);
+		actionBarTitleView = (TextView) actionBarView.findViewById(R.id.actionbar_title_txt);
+		menuView = (TextView) findViewById(R.id.payment_menu_txt);
+		storeView = (TextView) findViewById(R.id.payment_store_txt);
+		addressView = (TextView) findViewById(R.id.payment_address_txt);
+		totalPriceView = (TextView) findViewById(R.id.payment_cart_price_txt);
+		mileageDetailLayout = (LinearLayout) findViewById(R.id.payment_mileage_layout);
+		mileageLayout = (LinearLayout) findViewById(R.id.payment_mileage_txt_layout);
+		userMileageView = (TextView) findViewById(R.id.payment_user_mileage_txt);
+		useMileageEdit = (EditText) findViewById(R.id.payment_mileage_edit);
+		resultPriceView = (TextView) findViewById(R.id.payment_result_price_txt);
+		addMileageView = (TextView) findViewById(R.id.payment_add_mileage_txt);
+		mileageView = (TextView) findViewById(R.id.payment_mileage_txt);
+		btnUseStamp = (Button) findViewById(R.id.payment_stamp_usage_btn);
+		btnUseMileage = (Button) findViewById(R.id.payment_use_all_mileage_btn);
+//		cardCheckBox = (CheckBox) findViewById(R.id.payment_card_check_box);
+		Button btnPayment = (Button) findViewById(R.id.payment_btn);
+//		phoneCheckBox = (CheckBox) findViewById(R.id.payment_phone_check_box);
+		payTypeRadioGroup = (RadioGroup) findViewById(R.id.payment_radio_group);
+		initWheel(R.id.payment_wheel_view, minutes);
+		
+
+		// 즐겨찾기, now할인, 카트(주문하기)
+		Intent paymentInfo = getIntent();
+		if (paymentInfo != null) {
+			OrderList orderInfo = paymentInfo
+					.getParcelableExtra(PAYMENT_ORDER_DETAILS);
+			if (orderInfo != null) {
+				//매장 찾아서 
+				StringBuilder sb = new StringBuilder();
+				for(int i = 0; i < orderInfo.items.size(); i ++) {
+					sb.append(orderInfo.items.get(i).item_name);
+					//마지막 것이 아니면 쉼표 붙임
+					if(i != orderInfo.items.size()-1) {
+						sb.append(", ");
+					}
+				}
+
+				
+				setStoreInfo(orderInfo.store_id);
+				menuView.setText(sb.toString());
+				totalPriceView.setText(thousandFormat.format(orderInfo.total_amount));
+				resultPriceView.setText(thousandFormat.format(orderInfo.total_amount));
+				setAvailableMileage();
+				addMileageView.setText("결제 완료 후 " + thousandFormat.format(orderInfo.mileage) + "원이 적립됩니다");
+				orderId = orderInfo.order_id;
+			}
+
+		}
+
+		mileageLayout.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				switch (mileageDetailLayout.getVisibility()) {
+				case ImageView.VISIBLE:
+					mileageDetailLayout.setVisibility(ImageView.GONE);
+					break;
+				case ImageView.GONE:
+					mileageDetailLayout.setVisibility(ImageView.VISIBLE);
+					break;
+				}
+			}
+		});
+
+		// 사용 불가 일 경우 unenabled
+		btnUseStamp.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				PrepareDialogFragment dialog = new PrepareDialogFragment();
+				dialog.show(getSupportFragmentManager(), DIALOG_PREPARE_TAG);
+			}
+		});
+
+		btnUseMileage.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				try{
+					String mileageInput = useMileageEdit.getText().toString();
+					long useMileage = Long.parseLong(mileageInput);
+					
+					if(mileage != -1) {
+						if(useMileage > mileage) {
+							Toast.makeText(PaymentActivity.this, "사용 가능한 마일리지를 초과하였습니다!", Toast.LENGTH_SHORT).show();
+						} else {
+							mileageView.setText(useMileage + "");
+						}
+	 				}
+				} catch(NumberFormatException e) {
+					
+				}
+				
+				PrepareDialogFragment dialog = new PrepareDialogFragment();
+				dialog.show(getSupportFragmentManager(), DIALOG_PREPARE_TAG);
+			}
+		});
+
+//		cardCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+//
+//			@Override
+//			public void onCheckedChanged(CompoundButton buttonView,
+//					boolean isChecked) {
+//				// 결제 금액과 확인
+//			}
+//		});
+//		
+//		phoneCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+//			
+//			@Override
+//			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//				if(isChecked) {
+//					pay_type = 0;
+//				}
+//			}
+//		});
+		
+		payTypeRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(RadioGroup group, int checkedId) {
+				switch(checkedId) {
+				case R.id.payment_radio_card : 
+					payType = 1;
+					break;
+				case R.id.payment_radio_phone : 
+					payType = 0;
+					break;
+				}
+			}
+		});
+
+		btnPayment.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				goPaymentFinish();
+			}
+		});
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		actionBar.setHomeButtonEnabled(true);
+		actionBar.setDisplayHomeAsUpEnabled(true);
+		actionBar.setDisplayShowHomeEnabled(false);
+		actionBar.setDisplayShowCustomEnabled(true);
+		actionBar.setBackgroundDrawable(getResources().getDrawable(
+				R.color.main_orange_color));
+		actionBar.setTitle("");
+		actionBar.setHomeAsUpIndicator(R.drawable.back_btn_selector);
+		actionBar.setCustomView(actionBarView, new LayoutParams(Gravity.CENTER));
+		actionBarTitleView.setText("결제 내역");
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// TODO Auto-generated method stub
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId() == android.R.id.home) {
+			finish();
+			return true;
+		}
+		return false;
+	}
+	
+	public static final String GO_PAYMENT_FINISH = "goPaymentFinish";
+	
+	private void goPaymentFinish() {
+		
+		//받아온 주문id 있는지 검사
+		if(orderId != 0) {
+			NetworkManager.getInstance().createPaymnet(this, orderId, payType, minute, new OnResultListener<PaymentResult>() {
+
+				@Override
+				public void onSuccess(PaymentResult result) {
+					if(result.success == 1) {
+						Intent i = new Intent(PaymentActivity.this,
+								PaymentFinishActivity.class);
+						i.putExtra(GO_PAYMENT_FINISH, result.result);
+						startActivity(i);
+					}
+				}
+
+				@Override
+				public void onFail(int code) {
+					
+				}
+			});
+		}
+	}
+
+	private void initWheel(int id, Integer[] minutes) {
+
+		WheelNumberViewAdapter<Integer> adapter = new WheelNumberViewAdapter<Integer>(
+				this, minutes);
+
+		WheelView wheel = getWheel(id);
+		wheel.setViewAdapter(adapter);
+		wheel.setCurrentItem((int) (Math.random() * 10));
+		wheel.setVisibleItems(7);
+
+		wheel.addChangingListener(changedListener);
+		wheel.addScrollingListener(scrolledListener);
+		wheel.setCurrentItem(0);
+		wheel.setCyclic(true);
+		wheel.setEnabled(true);
+		wheel.setVisibleItems(3);
+	}
+
+	Handler handlar = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			// TODO Auto-generated method stub
+			super.handleMessage(msg);
+			mixWheel(R.id.payment_wheel_view);
+		}
+	};
+
+	class UpdateTimeTask extends TimerTask {
+		public void run() {
+			handlar.removeCallbacks(this);
+			handlar.sendEmptyMessage(0);
+		}
+	}
+
+	// Wheel scrolled flag
+	private boolean wheelScrolled = false;
+
+	// Wheel scrolled listener
+	OnWheelScrollListener scrolledListener = new OnWheelScrollListener() {
+		public void onScrollingStarted(WheelView wheel) {
+			wheelScrolled = true;
+		}
+
+		public void onScrollingFinished(WheelView wheel) {
+			wheelScrolled = false;
+			// updateStatus();
+
+			Toast.makeText(getApplicationContext(),
+					minutes[wheel.getCurrentItem()] + "", Toast.LENGTH_LONG)
+					.show();
+			minute = minutes[wheel.getCurrentItem()];
+		}
+	};
+
+	// Wheel changed listener
+	private OnWheelChangedListener changedListener = new OnWheelChangedListener() {
+		public void onChanged(WheelView wheel, int oldValue, int newValue) {
+			if (!wheelScrolled) {
+				// updateStatus();
+			}
+		}
+	};
+
+	private WheelView getWheel(int id) {
+		return (WheelView) findViewById(id);
+	}
+
+	private void mixWheel(int id) {
+		WheelView wheel = getWheel(id);
+		wheel.scroll(-350 + (int) (Math.random() * 50), 2000);
+
+	}
+	
+	private void setStoreInfo(int storeId) {
+		NetworkManager.getInstance().getStore(this, storeId, new OnResultListener<StoreResult>() {
+			
+			@Override
+			public void onSuccess(StoreResult result) {
+				if(result.success == 1) {
+					storeView.setText(result.result.items.name);
+					addressView.setText(result.result.items.address);
+				}
+			}
+			
+			@Override
+			public void onFail(int code) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+	}
+	
+	private void setAvailableMileage() {
+		NetworkManager.getInstance().getMileageData(this, new OnResultListener<MileageResult>() {
+
+			@Override
+			public void onSuccess(MileageResult result) {
+				if(result.success == 1) {
+					userMileageView.setText(thousandFormat.format(result.result.mileage) + "");
+					mileage = result.result.mileage;
+				}
+			}
+
+			@Override
+			public void onFail(int code) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+	}
+
+}

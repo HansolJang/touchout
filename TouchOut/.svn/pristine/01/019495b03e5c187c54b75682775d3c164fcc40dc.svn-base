@@ -1,0 +1,1077 @@
+package kr.jroad.touchout.manager;
+
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+
+import kr.jroad.touchout.data.AvailableStampResult;
+import kr.jroad.touchout.data.CartResult;
+import kr.jroad.touchout.data.FavoriteResult;
+import kr.jroad.touchout.data.MileageResult;
+import kr.jroad.touchout.data.NoticeResult;
+import kr.jroad.touchout.data.NowSaleResult;
+import kr.jroad.touchout.data.PaymentHistoryResult;
+import kr.jroad.touchout.data.PostResult;
+import kr.jroad.touchout.data.ProfileResult;
+import kr.jroad.touchout.data.RankingResult;
+import kr.jroad.touchout.data.ReviewResult;
+import kr.jroad.touchout.data.SearchResult;
+import kr.jroad.touchout.data.SortingRecentListData;
+import kr.jroad.touchout.data.SortingStoreResult;
+import kr.jroad.touchout.data.StampResult;
+import kr.jroad.touchout.data.StoreMenuResult;
+import kr.jroad.touchout.data.StoreResult;
+import kr.jroad.touchout.data.SubImageResult;
+import kr.jroad.touchout.extra.MyApplication;
+
+import org.apache.http.Header;
+import org.apache.http.client.HttpClient;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+
+import com.google.gson.Gson;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.MySSLSocketFactory;
+import com.loopj.android.http.PersistentCookieStore;
+import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.TextHttpResponseHandler;
+
+public class NetworkManager {
+	private static NetworkManager instance;
+
+	public static NetworkManager getInstance() {
+		if (instance == null) {
+			instance = new NetworkManager();
+		}
+		return instance;
+	}
+
+	Gson gson = new Gson();
+	AsyncHttpClient client;
+	public static final String SERVER = "http://ec2-54-65-7-58.ap-northeast-1.compute.amazonaws.com";
+
+	private NetworkManager() {
+
+		try {
+			KeyStore trustStore = KeyStore.getInstance(KeyStore
+					.getDefaultType());
+			trustStore.load(null, null);
+			MySSLSocketFactory socketFactory = new MySSLSocketFactory(
+					trustStore);
+			socketFactory
+					.setHostnameVerifier(MySSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+			client = new AsyncHttpClient();
+			client.setSSLSocketFactory(socketFactory);
+			client.setCookieStore(new PersistentCookieStore(MyApplication
+					.getContext()));
+			client.setTimeout(30000);
+		} catch (KeyStoreException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (CertificateException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (KeyManagementException e) {
+			e.printStackTrace();
+		} catch (UnrecoverableKeyException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public interface OnResultListener<T> {
+		public void onSuccess(T result);
+
+		public void onFail(int code);
+	}
+
+	// get user profile
+	public static final String URL_USER_PROFILE = SERVER + "/profile";
+
+	public void getUserProfile(Context context,
+			final OnResultListener<ProfileResult> listener) {
+		client.get(context, URL_USER_PROFILE, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				ProfileResult result = gson.fromJson(responseString,
+						ProfileResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// edit user account(alarm setting)
+	public void editUserAlarm(Context context, boolean no_alarm,
+			final OnResultListener<PostResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("_method", "PUT");
+		params.put("no_alarm", no_alarm + "");
+
+		client.post(context, URL_USER_PROFILE, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						PostResult result = gson.fromJson(responseString,
+								PostResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// add account (facebook login)
+	public void addUserAccount(Context context, String access_token,
+			final OnResultListener<PostResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("access_token", access_token);
+
+		client.post(context, URL_USER_PROFILE, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						PostResult result = gson.fromJson(responseString,
+								PostResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// logout
+	public static final String URL_USER_LOGOUT = SERVER + "/profile/logout";
+
+	public void doLogout(Context context,
+			final OnResultListener<PostResult> listener) {
+		client.post(context, URL_USER_LOGOUT, null,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						PostResult result = gson.fromJson(responseString,
+								PostResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// delete user account , 탈퇴
+	public void deleteUserAccount(Context context,
+			final OnResultListener<PostResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("_method", "DELETE");
+
+		client.post(context, URL_USER_PROFILE, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						PostResult result = gson.fromJson(responseString,
+								PostResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+
+	}
+
+	// all(0) 카페(1) 도시락(2) 피자(3) 밥버거(4) 치킨(5) 분식(6)
+	// 내 위치 기반 500m 내 매장 검색
+	public static final String URL_SORTING_STORE = SERVER + "/stores";
+
+	public void getSortingStore(Context context, int category, float latitude,
+			float longitude, int page_no, String orderby,
+			final OnResultListener<SortingStoreResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("category", category + "");
+		params.put("latitude", latitude + "");
+		params.put("longitude", longitude + "");
+		params.put("page_no", page_no + "");
+		params.put("orderby", orderby);
+
+		client.get(context, URL_SORTING_STORE, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						SortingStoreResult result = gson.fromJson(
+								responseString, SortingStoreResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// store_id로 해당 매장 하나 검색
+	public static final String URL_GET_STORE = SERVER + "/stores/%s";
+
+	public void getStore(Context context, int store_id,
+			final OnResultListener<StoreResult> listener) {
+		String uri = String.format(URL_GET_STORE, store_id + "");
+
+		client.get(context, uri, null, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				StoreResult result = gson.fromJson(responseString,
+						StoreResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// get sub image
+	public static final String URL_SUB_IMAGE = SERVER + "/stores/%s/images";
+
+	public void getSubImage(Context context, int store_id,
+			final OnResultListener<SubImageResult> listener) {
+		String uri = String.format(URL_SUB_IMAGE, store_id + "");
+
+		client.get(context, uri, null, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				SubImageResult result = gson.fromJson(responseString,
+						SubImageResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+
+	}
+
+	// 장바구니 조회
+	public static final String URL_CART = SERVER + "/cart";
+
+	public void getCartItem(Context context,
+			final OnResultListener<CartResult> listener) {
+		client.get(context, URL_CART, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				CartResult result = gson.fromJson(responseString,
+						CartResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// add cart
+	public void addCartItem(Context context, int item_id, int count,
+			boolean is_whipping, String size,
+			final OnResultListener<PostResult> listener) {
+
+		RequestParams params = new RequestParams();
+		params.put("item_id", item_id + "");
+		params.put("count", count + "");
+		params.put("is_whipping", is_whipping + "");
+		params.put("size", size);
+
+		client.post(URL_CART, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// edit cart
+	public static final String URL_CART_EDIT = SERVER + "/cart/%s";
+
+	public void editCartData(Context context, int item_id, int cartitem_id,
+			int count, final OnResultListener<PostResult> listener) {
+
+		String uri = String.format(URL_CART_EDIT, item_id + "");
+
+		RequestParams params = new RequestParams();
+		params.put("_method", "PUT");
+		params.put("cartitem_id", cartitem_id + "");
+		params.put("count", count + "");
+
+		client.post(context, uri, null, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// delete cart
+	public static final String URL_CART_DELETE = "/cart/%s";
+
+	public void deleteCartData(Context context, int cartitem_id,
+			final OnResultListener<PostResult> listener) {
+
+		String uri = String.format(URL_CART_DELETE, cartitem_id + "");
+
+		RequestParams params = new RequestParams();
+		params.put("_method", "DELETE");
+
+		client.post(uri, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// 매장별 메뉴 데이터, 가격 낮은 순 정렬
+	public static final String URL_SOTRE_MENU = SERVER + "/stores/%s/item";
+
+	public void getMenuData(Context context, int store_id,
+			final OnResultListener<StoreMenuResult> onResultListener) {
+
+		String uri = String.format(URL_SOTRE_MENU, store_id + "");
+
+		client.get(context, uri, null, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				StoreMenuResult result = gson.fromJson(responseString,
+						StoreMenuResult.class);
+				onResultListener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				onResultListener.onFail(statusCode);
+			}
+		});
+	}
+
+	// 그 매장에 대한 리뷰 데이터
+	public static final String URL_REVIEW = SERVER + "/stores/%s/review";
+
+	public void getReviewData(Context context, int store_id, int page_no,
+			final OnResultListener<ReviewResult> listener) {
+		String uri = String.format(URL_REVIEW, store_id + "");
+
+		RequestParams params = new RequestParams();
+		params.put("page_no", page_no + "");
+
+		client.get(context, uri, params, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				ReviewResult result = gson.fromJson(responseString,
+						ReviewResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// add review
+	public void addReviewData(Context context, int store_id, int star,
+			String content, final OnResultListener<PostResult> listener) {
+		String uri = String.format(URL_REVIEW, store_id + "");
+
+		RequestParams params = new RequestParams();
+		params.put("store_id", store_id);
+		params.put("content", content);
+
+		client.post(context, uri, params, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+
+	}
+
+	// delete review
+	public static final String URL_REVIEW_DELETE = SERVER
+			+ "/stores/%s/review/%s";
+
+	public void deleteReviewData(Context context, int store_id, int review_id,
+			final OnResultListener<PostResult> listener) {
+		String uri = String.format(URL_REVIEW_DELETE, store_id + "", review_id
+				+ "");
+
+		RequestParams params = new RequestParams();
+		params.put("_method", "DELETE");
+
+		client.post(context, uri, params, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// get my review
+	public static final String URL_USER_REVIEW = SERVER + "/review";
+
+	public void getUserReviewData(Context context, int page_no,
+			final OnResultListener<ReviewResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("page_no", page_no + "");
+
+		client.get(context, URL_USER_REVIEW, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						ReviewResult result = gson.fromJson(responseString,
+								ReviewResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// delete user review
+	public static final String URL_USER_REVIEW_DELETE = SERVER + "/review/%s";
+
+	public void deleteUserReview(Context context, int review_id,
+			final OnResultListener<PostResult> listener) {
+		String uri = String.format("review_id", review_id);
+
+		RequestParams params = new RequestParams();
+		params.put("_method", "DELETE");
+
+		client.post(context, uri, params, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+
+	}
+
+	// get favorite data
+	public static final String URL_FAVORITE = SERVER + "/favorite";
+
+	public void getFavoriteData(Context context,
+			final OnResultListener<FavoriteResult> listener) {
+
+		client.get(context, URL_FAVORITE, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				FavoriteResult result = gson.fromJson(responseString,
+						FavoriteResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// add favorite
+	public void addFavoriteData(Context context, int item_id,
+			boolean is_whipping, String size,
+			final OnResultListener<PostResult> listener) {
+
+		RequestParams params = new RequestParams();
+		params.put("item_id", item_id + "");
+		params.put("is_whipping", is_whipping + "");
+		params.put("size", size);
+
+		client.post(URL_FAVORITE, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// cancel favorite
+	public void cancelFavoriteData(Context context, int item_id,
+			boolean is_whipping, String size,
+			final OnResultListener<PostResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("_method", "DELETE");
+		params.put("item_id", item_id + "");
+		params.put("is_whipping", is_whipping + "");
+		params.put("size", size);
+		
+		client.post(context, URL_FAVORITE, params, new TextHttpResponseHandler() {
+			
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString, PostResult.class);
+				listener.onSuccess(result);
+			}
+			
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// edit favorite
+	public static final String URL_FAVORITE_EDIT = SERVER + "/favorite/%s";
+
+	// favorite_id => 수정 될 이전에 있던 즐겨찾기 메뉴
+	public void editFavoriteData(Context context, int favorite_id, int item_id,
+			boolean is_whipping, String size,
+			final OnResultListener<PostResult> listener) {
+
+		String uri = String.format(URL_FAVORITE_EDIT, favorite_id + "");
+
+		RequestParams params = new RequestParams();
+		params.put("_method", "PUT");
+		params.put("item_id", item_id + "");
+		params.put("is_whipping", is_whipping + "");
+		params.put("size", size);
+
+		client.post(uri, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+
+	}
+
+	// delete favorite
+	public static final String URL_FAVORITE_DELETE = SERVER + "/favorite/%s";
+
+	public void deleteFavoriteData(Context context, int favorite_id,
+			final OnResultListener<PostResult> listener) {
+
+		String uri = String.format(URL_FAVORITE_DELETE, favorite_id + "");
+
+		RequestParams params = new RequestParams();
+		params.put("_method", "DELETE");
+
+		client.post(context, uri, params, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// serach store
+	public static final String URL_SEARCH_STORE = SERVER + "/search";
+
+	public void getSearchResult(Context context, String keyword,
+			float latitude, float longitude, int page_no,
+			final OnResultListener<SearchResult> listener) {
+
+		RequestParams params = new RequestParams();
+		params.put("keyword", keyword);
+		params.put("latitude", latitude + "");
+		params.put("longitude", longitude + "");
+		params.put("page_no", page_no + "");
+
+		client.get(context, URL_SEARCH_STORE, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						SearchResult result = gson.fromJson(responseString,
+								SearchResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// 더찾기의 인기검색어
+	public static final String URL_SEARCH_RANKING_WORD = SERVER
+			+ "/search/word";
+
+	public void getRankingWord(Context context,
+			final OnResultListener<RankingResult> listener) {
+		client.get(context, URL_SEARCH_RANKING_WORD, null,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						RankingResult result = gson.fromJson(responseString,
+								RankingResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// get now할인 data
+	/********************* whipping *********************/
+	public static final String URL_NOW_SALE = SERVER + "/discount";
+
+	public void getNowSaleData(Context context, float latitude,
+			float longitude, int page_no,
+			final OnResultListener<NowSaleResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("latitude", latitude + "");
+		params.put("longitude", longitude + "");
+		params.put("page_no", page_no + "");
+
+		client.get(context, URL_NOW_SALE, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						NowSaleResult result = gson.fromJson(responseString,
+								NowSaleResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// get notice list
+	public static final String URL_NOTICE = SERVER + "/notice";
+
+	public void getNoticeData(Context context,
+			final OnResultListener<NoticeResult> listener) {
+		client.get(context, URL_NOTICE, null, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				NoticeResult result = gson.fromJson(responseString,
+						NoticeResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// get stamp list
+	public static final String URL_STAMP = SERVER + "/wallet/stamp";
+
+	public void getStampData(Context context, int page_no,
+			final OnResultListener<StampResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("page_no", page_no + "");
+
+		client.get(context, URL_STAMP, params, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				StampResult result = gson.fromJson(responseString,
+						StampResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// get available stamp
+	public static final String URL_STAMP_AVAILABLE = SERVER
+			+ "/payment/userstamp/store/%s";
+
+	public void getStampAvailable(Context context, int store_id,
+			final OnResultListener<AvailableStampResult> listener) {
+		String uri = String.format(URL_STAMP_AVAILABLE, store_id);
+
+		client.get(context, uri, null, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				AvailableStampResult result = gson.fromJson(responseString,
+						AvailableStampResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// use stamp
+	public static final String URL_STAMP_USE = SERVER + "/payment/userstamp/%s";
+
+	public void useStamp(Context context, int userstamp_id,
+			final OnResultListener<PostResult> listener) {
+		String uri = String.format(URL_STAMP_USE, userstamp_id + "");
+
+		client.post(context, uri, null, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// delete stamp
+	public static final String URL_STAMP_DELETE = SERVER
+			+ "/wallet/userstamp/%s";
+
+	public void deleteStampData(Context context, int userstamp_id,
+			final OnResultListener<PostResult> listener) {
+		String uri = String.format("userstamp_id", userstamp_id + "");
+
+		RequestParams params = new RequestParams();
+		params.put("_method", "DELETE");
+
+		client.post(context, uri, params, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				PostResult result = gson.fromJson(responseString,
+						PostResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+
+	}
+
+	// get user mileage
+	public static final String URL_MILEAGE = SERVER + "/wallet/mileage";
+
+	public void getMileageData(Context context,
+			final OnResultListener<MileageResult> listener) {
+		client.get(context, URL_MILEAGE, new TextHttpResponseHandler() {
+
+			@Override
+			public void onSuccess(int statusCode, Header[] headers,
+					String responseString) {
+				MileageResult result = gson.fromJson(responseString,
+						MileageResult.class);
+				listener.onSuccess(result);
+			}
+
+			@Override
+			public void onFailure(int statusCode, Header[] headers,
+					String responseString, Throwable throwable) {
+				listener.onFail(statusCode);
+			}
+		});
+	}
+
+	// use mileage
+	public static final String URL_MILEAGE_USE = SERVER + "/payment/mileage";
+
+	public void useMileage(Context context, int mileage,
+			final OnResultListener<PostResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("mileage", mileage + "");
+
+		client.post(context, URL_MILEAGE_USE, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						PostResult result = gson.fromJson(responseString,
+								PostResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// 결제 내역 데이터
+	public static final String URL_PAYMENT_HISTORY = SERVER + "/wallet/payment";
+
+	public void getPaymentHistoryData(Context context, int page_no,
+			final OnResultListener<PaymentHistoryResult> listener) {
+		RequestParams params = new RequestParams();
+		params.put("page_no", page_no + "");
+
+		client.get(context, URL_PAYMENT_HISTORY, params,
+				new TextHttpResponseHandler() {
+
+					@Override
+					public void onSuccess(int statusCode, Header[] headers,
+							String responseString) {
+						PaymentHistoryResult result = gson.fromJson(
+								responseString, PaymentHistoryResult.class);
+						listener.onSuccess(result);
+					}
+
+					@Override
+					public void onFailure(int statusCode, Header[] headers,
+							String responseString, Throwable throwable) {
+						listener.onFail(statusCode);
+					}
+				});
+	}
+
+	// 최근 본 지역 리스트
+	public void getRecentPlaceData(Context context,
+			final OnResultListener<ArrayList<SortingRecentListData>> listener) {
+		ArrayList<SortingRecentListData> list = new ArrayList<SortingRecentListData>();
+		for (int i = 0; i < 5; i++) {
+			SortingRecentListData d = new SortingRecentListData();
+			d.recentPlace = "자양 " + i + "동";
+			list.add(d);
+		}
+		listener.onSuccess(list);
+	}
+
+	public interface OnImageListener {
+		public void onSuccess(String url, Bitmap bitmap);
+
+		public void onFail(String url, int code);
+	}
+
+	// public void getNetworkImage(final String urlText,
+	// final OnImageListener listener) {
+	// new Thread(new Runnable() {
+	//
+	// @Override
+	// public void run() {
+	// try {
+	// URL url = new URL(urlText);
+	// HttpURLConnection conn = (HttpURLConnection) url
+	// .openConnection();
+	// int code = conn.getResponseCode();
+	// if (code == HttpURLConnection.HTTP_OK) {
+	// InputStream is = conn.getInputStream();
+	// final Bitmap bm = BitmapFactory.decodeStream(is);
+	// mHandler.post(new Runnable() {
+	//
+	// @Override
+	// public void run() {
+	// listener.onSuccess(urlText, bm);
+	// }
+	// });
+	// }
+	// } catch (MalformedURLException e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// } catch (IOException e) {
+	// // TODO Auto-generated catch block
+	// e.printStackTrace();
+	// }
+	//
+	// }
+	// }).start();
+	// }
+
+	public HttpClient getHttpClient() {
+		return client.getHttpClient();
+	}
+
+}

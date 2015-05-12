@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <FrameLayout
+        android:id="@+id/store_info_image_container"
+        android:layout_width="match_parent"
+        android:layout_height="120dp" >
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/store_info_pager"
+            android:layout_width="match_parent"
+            android:layout_height="120dp" />
+
+        <com.viewpagerindicator.CirclePageIndicator
+            android:id="@+id/store_info_indicator"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="10dp"
+            android:padding="10dip"
+            app:fillColor="@color/main_orange_color"
+            app:pageColor="@color/alpha_white_color"
+            app:strokeColor="@color/main_orange_color"
+            app:strokeWidth="0dp" />
+    </FrameLayout>
+
+    <Button
+        android:id="@+id/store_info_show_map_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#fff"
+        android:background="@drawable/review_map_btn"
+        android:text="지도보기" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/category_item_txt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:text="주소" />
+
+            <TextView
+                android:id="@+id/store_info_address_txt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="TextView" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/write_review_name_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="전화" />
+
+        <TextView
+            android:id="@+id/store_info_phone_txt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:text="TextView" />
+
+        <ImageView
+            android:id="@+id/store_info_phone_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_launcher" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/store_info_write_review_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#fff"
+        android:background="@drawable/review_review_btn"
+        android:text="리뷰작성" />
+
+</LinearLayout>

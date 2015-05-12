@@ -1,0 +1,24 @@
+package kr.jroad.touchout.view;
+
+import android.content.Context;
+import android.util.AttributeSet;
+import android.view.View;
+
+public class ShoppingCartView extends View {
+
+	public ShoppingCartView(Context context, AttributeSet attrs,
+			int defStyleAttr) {
+		super(context, attrs, defStyleAttr);
+	}
+
+	public ShoppingCartView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+	}
+
+	public ShoppingCartView(Context context) {
+		super(context);
+	}
+
+	
+
+}

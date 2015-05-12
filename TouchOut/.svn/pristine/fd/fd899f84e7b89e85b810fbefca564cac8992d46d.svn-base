@@ -1,0 +1,173 @@
+package kr.jroad.touchout.view;
+
+import java.util.ArrayList;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.data.StoreMenu;
+import kr.jroad.touchout.data.StoreMenuItem;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+public class MenuListView extends FrameLayout {
+
+	public interface OnFavortieSelectListener {
+		public void onFavoriteSelectListener(MenuListView view, StoreMenuItem data);
+	}
+
+	public interface OnAddCartListener {
+		public void onAddCartListener(MenuListView view, StoreMenuItem data);
+	}
+
+	OnFavortieSelectListener favoriteListener;
+	OnAddCartListener cartListener;
+
+	public void setOnFavoriteSelectListener(OnFavortieSelectListener listener) {
+		favoriteListener = listener;
+	}
+
+	public void setOnAddCartListener(OnAddCartListener listener) {
+		cartListener = listener;
+	}
+
+	Context mContext;
+	ArrayList<StoreMenu> items = new ArrayList<StoreMenu>();
+
+	public MenuListView(Context context) {
+		super(context);
+		init();
+	}
+
+	StoreMenuItem data;
+
+	boolean isHot;
+	LinearLayout menuLayout;
+	ImageView menuImgView;
+	TextView menuNameView;
+	TextView menuPriceView;
+	LinearLayout menuDetailLayout;
+	TextView menuWhippingText;
+	CheckBox menuWhippingCheckbox;
+	TextView menuAmountView;
+	ImageLoader imgLoader;
+
+	private void init() {
+		LayoutInflater.from(getContext())
+				.inflate(R.layout.menu_list_item, this);
+
+		menuLayout = (LinearLayout) findViewById(R.id.menu_layout);
+		menuImgView = (ImageView) findViewById(R.id.menu_img);
+		menuNameView = (TextView) findViewById(R.id.menu_name_txt);
+		menuPriceView = (TextView) findViewById(R.id.menu_price_txt);
+		menuDetailLayout = (LinearLayout) findViewById(R.id.menu_detail_layout);
+		menuWhippingText = (TextView) findViewById(R.id.menu_whipping_txt);
+		menuWhippingCheckbox = (CheckBox) findViewById(R.id.menu_whipping_checkbox);
+		menuAmountView = (TextView) findViewById(R.id.menu_amount_txt);
+		imgLoader = ImageLoader.getInstance();
+
+		// /////////////////////////interface로 모조리 바꿔야함
+		Button btnMenuAmountMinus = (Button) findViewById(R.id.menu_amount_minus_btn);
+		btnMenuAmountMinus.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				//수량 빼기 1보다 무조건 커야함
+			}
+		});
+
+		Button btnMenuAmountPlus = (Button) findViewById(R.id.menu_amount_plus_btn);
+		btnMenuAmountPlus.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				//수량 ++
+			}
+		});
+
+		Button btnMenuSizeRegular = (Button) findViewById(R.id.menu_size_regular_btn);
+		btnMenuSizeRegular.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				//디폴트 r
+			}
+		});
+
+		Button btnMenuSizeLarge = (Button) findViewById(R.id.menu_size_large_btn);
+		btnMenuSizeLarge.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				//라지 사이즈 선택
+			}
+		});
+
+		ImageView btnMenuFavorite = (ImageView) findViewById(R.id.menu_favorite_img);
+		btnMenuFavorite.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (favoriteListener != null) {
+					favoriteListener.onFavoriteSelectListener(MenuListView.this, data);
+				}
+			}
+		});
+
+		Button btnMenuCart = (Button) findViewById(R.id.menu_cart_btn);
+		btnMenuCart.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (cartListener != null) {
+					cartListener.onAddCartListener(MenuListView.this, data);
+				}
+			}
+		});
+
+		Button btnMenuPayment = (Button) findViewById(R.id.menu_payment_btn);
+		btnMenuPayment.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				//하나만 결제
+			}
+		});
+
+	}
+
+	public void setData(StoreMenuItem data) {
+		this.data = data;
+		if(data.is_whipping == 0) {
+			data.whippingEnabled = false;
+		} else {
+			data.whippingEnabled = true;
+		}
+		imgLoader.displayImage(data.image, menuImgView);
+		menuNameView.setText(data.menuName);
+		menuPriceView.setText(data.menuPrice+"");
+		if (data.menuSelected) {
+			menuDetailLayout.setVisibility(VISIBLE);
+			if (data.whippingEnabled) {
+				menuWhippingText.setEnabled(true);
+				menuWhippingCheckbox.setEnabled(true);
+			} else {
+				menuWhippingText.setEnabled(false);
+				menuWhippingCheckbox.setEnabled(false);
+			}
+
+			menuAmountView.setText(data.count + "");
+
+		} else {
+			menuDetailLayout.setVisibility(GONE);
+		}
+	}
+
+}

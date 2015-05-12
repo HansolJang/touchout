@@ -1,0 +1,95 @@
+package kr.jroad.touchout.dialog;
+
+import java.util.ArrayList;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.adapter.StampAdapter;
+import kr.jroad.touchout.data.FavoriteItem;
+import kr.jroad.touchout.data.SortingStore;
+import kr.jroad.touchout.data.StampData;
+import kr.jroad.touchout.data.StampItem;
+import kr.jroad.touchout.fragment.FavoriteFragment;
+import kr.jroad.touchout.fragment.HomeAllStoreFragment;
+import kr.jroad.touchout.fragment.StoreHotMenuFragment;
+import kr.jroad.touchout.view.StampListView;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.GridView;
+import android.widget.TextView;
+
+public class StampDialogFragment extends DialogFragment {
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		// /////////////////arraylist<stampItem> => parcelable!
+		Bundle b = getArguments();
+		if (b != null) {
+			stamp = b.getParcelable(StoreHotMenuFragment.STORE_STAMP_KEY);
+			selectedStore = b
+					.getParcelable(HomeAllStoreFragment.SELECTED_STORE);
+			editMenu = b.getParcelable(FavoriteFragment.GO_EDIT_MENU);
+		}
+	}
+
+	SortingStore selectedStore;
+	FavoriteItem editMenu;
+	StampItem stamp;
+
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.dialog_stamp, container, false);
+	}
+
+	TextView storeNameView;
+	GridView stampGridView;
+	StampAdapter stampAdapter;
+	TextView descView;
+	TextView rewardView;
+
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+
+		storeNameView = (TextView) view
+				.findViewById(R.id.dialog_stamp_store_name_txt);
+		stampGridView = (GridView) view
+				.findViewById(R.id.dialog_stamp_grid_view);
+		stampAdapter = new StampAdapter(getActivity());
+		descView = (TextView) view.findViewById(R.id.dialog_stamp_desc_txt);
+		rewardView = (TextView) view.findViewById(R.id.dialog_stamp_reward_txt);
+
+		if (stamp != null) {
+			ArrayList<StampData> data = new ArrayList<StampData>();
+			for (int i = 0; i < 10; i++) {
+				if (i < stamp.stampCount) {
+					data.get(i).stamped = true;
+					data.get(i).stampedId = StampListView.stampedIcon[i];
+				} else {
+					data.get(i).stamped = false;
+					data.get(i).unStampedId = StampListView.unstampedIcon[i];
+				}
+			}
+			stampAdapter.addAll(data);
+		}
+
+		/***
+		 * * storeName 필요하므로
+		 * *****/
+		if (selectedStore != null) {
+			storeNameView.setText(selectedStore.name);
+		} else if (editMenu != null) {
+			storeNameView.setText(editMenu.storeName);
+		}
+
+		if (stamp != null) {
+			descView.setText(stamp.stampDesc);
+			rewardView.setText("스탬프 10개 달성시 " + stamp.reward + "가 무료! ");
+		}
+	}
+}

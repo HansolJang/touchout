@@ -1,0 +1,74 @@
+package kr.jroad.touchout.fragment;
+
+import kr.jroad.touchout.activity.R;
+import kr.jroad.touchout.adapter.TabsAdapter;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TabHost;
+import android.widget.TabHost.OnTabChangeListener;
+
+public class ExtraMyWalletFragment extends Fragment {
+	
+	TabHost tabHost;
+	ViewPager pager;
+	TabsAdapter tabAdapter;
+	
+	public static final String MY_PAGE_TAB1_TAG = "stampTab";
+	public static final String MY_PAGE_TAB2_TAG = "mileageTaB";
+	public static final String MY_PAGE_TAB3_TAG = "paymentHistoryTab";	
+	private static final String MY_PAGE_TAB_TAG = "currentTab";
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.fragment_my_wallet, container, false);
+		
+	}
+	
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
+		
+		tabHost = (TabHost)view.findViewById(R.id.my_page_tab_host);
+		tabHost.setup();
+		
+		pager = (ViewPager)view.findViewById(R.id.my_page_pager);
+		tabAdapter = new TabsAdapter(getActivity(), getChildFragmentManager(), tabHost, pager);
+		
+		tabAdapter.addTab(tabHost.newTabSpec(MY_PAGE_TAB1_TAG).setIndicator("스탬프"), ExtraStampFragment.class, null);
+		tabAdapter.addTab(tabHost.newTabSpec(MY_PAGE_TAB2_TAG).setIndicator("마일리지"), ExtraMileageFragment.class, null);
+		tabAdapter.addTab(tabHost.newTabSpec(MY_PAGE_TAB3_TAG).setIndicator("결제내역"), ExtraPaymentHistoryFragment.class, null);
+		
+		tabAdapter.setOnTabChangedListener(new OnTabChangeListener() {
+			
+			@Override
+			public void onTabChanged(String tabId) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		if (savedInstanceState != null) {
+			tabAdapter.onRestoreInstanceState(savedInstanceState);
+			tabHost.setCurrentTabByTag(savedInstanceState.getString(MY_PAGE_TAB_TAG));
+		}
+	
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		tabAdapter.onSaveInstanceState(outState);
+		outState.putString(MY_PAGE_TAB_TAG, tabHost.getCurrentTabTag());
+	}
+}

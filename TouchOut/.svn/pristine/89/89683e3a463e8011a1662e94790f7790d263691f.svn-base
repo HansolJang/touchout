@@ -1,0 +1,12 @@
+package kr.jroad.touchout.data;
+
+import java.util.ArrayList;
+
+public class StoreMenu {
+	public ArrayList<StoreMenuItem> hot;
+	public ArrayList<StoreMenuItem> cold;
+	
+	//only name + desc + reward
+	public StampItem stamp;
+}
+

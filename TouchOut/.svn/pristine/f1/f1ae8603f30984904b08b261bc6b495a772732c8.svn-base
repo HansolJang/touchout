@@ -1,0 +1,97 @@
+package kr.jroad.touchout.adapter;
+
+import java.util.ArrayList;
+
+import kr.jroad.touchout.data.StoreMenuItem;
+import kr.jroad.touchout.view.MenuListView;
+import kr.jroad.touchout.view.MenuListView.OnAddCartListener;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+
+public class MenuListAdapter extends BaseAdapter implements MenuListView.OnFavortieSelectListener, OnAddCartListener{
+	
+	public interface OnFavoriteAdapterListener {
+		public void onFavoriteAdapterListener(View v, StoreMenuItem data);
+	}
+	
+	public interface OnAddCartAdapterListener {
+		public void onAddCartAdapterListener(View v, StoreMenuItem data);
+	}
+	
+	OnFavoriteAdapterListener favoriteListener;
+	OnAddCartAdapterListener cartListener;
+	
+	public void setOnFavoriteAdapterListener(OnFavoriteAdapterListener listener) {
+		favoriteListener = listener;
+	}
+	
+	public void setOnAddCartAdapterListener (OnAddCartAdapterListener listener) {
+		cartListener = listener;
+	}
+	
+	Context mContext;
+	ArrayList<StoreMenuItem> items = new ArrayList<StoreMenuItem>();
+	
+	public void clearSelected() {
+		for(StoreMenuItem data : items) {
+			data.menuSelected = false;
+		}
+		notifyDataSetChanged();
+	}
+
+	public MenuListAdapter(Context context) {
+		mContext = context;
+	}
+
+	@Override
+	public int getCount() {
+		return items.size();
+	}
+
+	@Override
+	public Object getItem(int position) {
+		return items.get(position);
+	}
+
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		MenuListView view;
+		if(convertView == null) {
+			view = new MenuListView(mContext);
+			view.setOnFavoriteSelectListener(this);
+			view.setOnAddCartListener(this);
+		} else {
+			view = (MenuListView) convertView;
+		}
+		view.setData(items.get(position));
+		return view;
+	}
+
+	public void add(StoreMenuItem data) {
+		items.add(data);
+		notifyDataSetChanged();
+	}
+
+	@Override
+	public void onFavoriteSelectListener(MenuListView view, StoreMenuItem data) {
+		if(favoriteListener != null) {
+			favoriteListener.onFavoriteAdapterListener(view, data);
+		}
+	}
+
+	@Override
+	public void onAddCartListener(MenuListView view, StoreMenuItem data) {
+		if(cartListener != null) {
+			cartListener.onAddCartAdapterListener(view, data);
+		}
+	}
+
+}

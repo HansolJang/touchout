@@ -1,0 +1,64 @@
+package kr.jroad.touchout.activity;
+
+import kr.jroad.touchout.data.ProfileResult;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import kr.jroad.touchout.manager.PropertyManager;
+import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+public class CallActivity extends ActionBarActivity {
+	
+	TextView descView;
+
+	/** Called when the activity is first created. */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+	    super.onCreate(savedInstanceState);
+	    setContentView(R.layout.activity_call);
+	    descView = (TextView)findViewById(R.id.call_desc_txt);
+	    
+	    setPaymentDescView();
+	    
+	    Button btnExit = (Button)findViewById(R.id.call_exit_btn);
+	    btnExit.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				finish();
+			}
+		});
+	    
+	    Button btnPickup = (Button)findViewById(R.id.call_pickup_btn);
+	    btnPickup.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				PropertyManager.getInstance().setIsPickUp(true);
+				finish();
+			}
+		});
+	}
+	
+	private void setPaymentDescView() {
+		NetworkManager.getInstance().getUserProfile(this, new OnResultListener<ProfileResult>() {
+			
+			@Override
+			public void onSuccess(ProfileResult result) {
+				if(result.success == 1) {
+					descView.setText(result.result.items.name + "님! \n 영수증에서 이름을 확인하고 \n 음료를 픽업하세요!");
+				}
+			}
+			
+			@Override
+			public void onFail(int code) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+	}
+
+}

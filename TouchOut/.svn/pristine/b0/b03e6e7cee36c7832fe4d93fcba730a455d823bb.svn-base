@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/gray_background" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/favorite_banner" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+            <ListView
+                android:id="@+id/favorite_list"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:divider="@drawable/divider_light"
+                android:listSelector="@drawable/null_image" >
+            </ListView>
+
+            <kr.jroad.touchout.view.ListEmptyView
+                android:id="@+id/favorite_empty_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" >
+            </kr.jroad.touchout.view.ListEmptyView>
+        </FrameLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/favorite_cart_above_number_view"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="310dp"
+        android:layout_marginRight="23dp"
+        android:background="@drawable/cart_speach_balloon"
+        android:paddingLeft="5dp"
+        android:text="1"
+        android:textColor="#fff"
+        android:textSize="11sp" />
+
+    <FrameLayout
+        android:id="@+id/favorite_cart_container"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/cart_height"
+        android:layout_gravity="bottom"
+        android:visibility="gone" >
+    </FrameLayout>
+
+    <ImageView
+        android:id="@+id/favorite_cart_strap_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="-18dp"
+        android:layout_marginRight="20dp"
+        android:src="@drawable/ic_launcher" />
+
+    <TextView
+        android:id="@+id/favorite_cart_number_view"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="30dp"
+        android:layout_marginRight="23dp"
+        android:background="@drawable/cart_speach_balloon"
+        android:paddingLeft="5dp"
+        android:text="1"
+        android:textColor="#fff"
+        android:textSize="11sp" />
+
+</FrameLayout>

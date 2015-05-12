@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".DemoActivity" >
+
+    <ListView
+        android:id="@+id/category_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@null"
+        android:listSelector="@drawable/null_image" >
+    </ListView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="30dp"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/category_cart_layout"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/cart_height"
+        android:layout_gravity="bottom" >
+    </FrameLayout>
+
+    <ImageView
+        android:id="@+id/category_cart_strap_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="-18dp"
+        android:layout_marginRight="20dp"
+        android:src="@drawable/ic_launcher" />
+
+    <TextView
+        android:id="@+id/category_cart_number_view"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="33dp"
+        android:layout_marginRight="23dp"
+        android:background="@drawable/cart_speach_balloon"
+        android:paddingLeft="5dp"
+        android:text="1"
+        android:textColor="#fff"
+        android:textSize="11sp" />
+
+</FrameLayout>

@@ -1,0 +1,35 @@
+package kr.jroad.touchout.view;
+
+import kr.jroad.touchout.activity.R;
+import android.content.Context;
+import android.util.AttributeSet;
+import android.view.LayoutInflater;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+public class ListEmptyView extends FrameLayout {
+
+	public ListEmptyView(Context context) {
+		super(context);
+		init();
+	}
+	
+	public ListEmptyView(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		init();
+	}
+
+
+	TextView descView;
+	
+	private void init() {
+		LayoutInflater.from(getContext()).inflate(R.layout.fragment_no_result, this);
+		
+		descView = (TextView)findViewById(R.id.no_result_txt);
+	}
+	
+	public void setData(String text) {
+		descView.setText(text);
+	}
+
+}

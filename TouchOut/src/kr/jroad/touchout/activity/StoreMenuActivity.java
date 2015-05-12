@@ -1,0 +1,487 @@
+package kr.jroad.touchout.activity;
+
+import java.util.ArrayList;
+
+import kr.jroad.touchout.data.CartItem;
+import kr.jroad.touchout.data.CartResult;
+import kr.jroad.touchout.data.FavoriteItem;
+import kr.jroad.touchout.data.OrderResult;
+import kr.jroad.touchout.data.OrderSendItem;
+import kr.jroad.touchout.data.OrderSendResult;
+import kr.jroad.touchout.data.SortingStore;
+import kr.jroad.touchout.data.StoreResult;
+import kr.jroad.touchout.fragment.CartFragment;
+import kr.jroad.touchout.fragment.FavoriteFragment;
+import kr.jroad.touchout.fragment.HomeAllStoreFragment;
+import kr.jroad.touchout.fragment.StoreHotMenuFragment;
+import kr.jroad.touchout.fragment.StoreIcedMenuFragment;
+import kr.jroad.touchout.manager.NetworkManager;
+import kr.jroad.touchout.manager.NetworkManager.OnResultListener;
+import kr.jroad.touchout.manager.PropertyManager;
+import kr.jroad.touchout.manager.PropertyManager.OnCartChangeListener;
+import kr.jroad.touchout.view.CenterTextActionBarView;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.FragmentTabHost;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.Animation.AnimationListener;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RatingBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
+
+public class StoreMenuActivity extends ActionBarActivity {
+
+	private static final String STORE_MENU_TAB1_ID = "hotMenu";
+	private static final String STORE_MENU_TAB2_ID = "icedMenu";
+
+	ImageView cartStrapView;
+	boolean isCartSelected = false;
+	LinearLayout storeInfoLayout;
+	FrameLayout cartLayout;
+	ActionBar actionBar;
+	int storeId;
+	int cartItemCount;
+	ImageLoader imgLoader;
+	Button btnPayment;
+	SortingStore selectedStore;
+	FavoriteItem editMenu;
+	Bundle editFavoriteMenuBundle;
+	Bundle selectedStoreBundle;
+
+	CenterTextActionBarView actionBarView;
+
+	TextView titleView;
+	ImageView storeImgView;
+	TextView storeNameView;
+	TextView storeDescView;
+	RatingBar storeStarView;
+	TextView cartNumberView;
+	int cartNumber;
+	CartFragment cart;
+
+	FragmentTabHost tabHost;
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_store_menu);
+		actionBar = getSupportActionBar();
+		actionBar.setHomeButtonEnabled(true);
+		actionBar.setDisplayHomeAsUpEnabled(true);
+		actionBar.setDisplayShowHomeEnabled(false);
+		actionBar.setDisplayShowCustomEnabled(true);
+		actionBar.setBackgroundDrawable(getResources().getDrawable(
+				R.color.main_orange_color));
+		actionBarView = new CenterTextActionBarView(StoreMenuActivity.this);
+		actionBar.setTitle("");
+		actionBar.setBackgroundDrawable(getResources().getDrawable(
+				R.color.main_orange_color));
+		actionBar.setCustomView(actionBarView, new ActionBar.LayoutParams(
+				Gravity.CENTER));
+		actionBar.setHomeAsUpIndicator(R.drawable.back_btn_selector);
+
+		titleView = (TextView) actionBarView
+				.findViewById(R.id.actionbar_title_txt);
+		imgLoader = ImageLoader.getInstance();
+
+		storeInfoLayout = (LinearLayout) findViewById(R.id.store_info_layout);
+		storeImgView = (ImageView) storeInfoLayout.findViewById(R.id.store_img);
+		storeNameView = (TextView) storeInfoLayout
+				.findViewById(R.id.store_name);
+		storeDescView = (TextView) storeInfoLayout
+				.findViewById(R.id.store_desc);
+		storeStarView = (RatingBar) storeInfoLayout
+				.findViewById(R.id.store_rating_bar);
+
+		View tab1View = LayoutInflater.from(this).inflate(
+				R.layout.menu_tab1_hot, null);
+		View tab2View = LayoutInflater.from(this).inflate(
+				R.layout.menu_tab2_iced, null);
+		
+		// cart listener set
+		PropertyManager.getInstance().addOnCartChangeListener(listener);
+
+		Intent i = getIntent();
+		if (i != null) {
+			// 매장 목록에서 선택해서 들어온 매장
+			selectedStore = i
+					.getParcelableExtra(HomeAllStoreFragment.SELECTED_STORE);
+			// 즐겨찾기->수정 으로 넘어온 객체
+			editMenu = i.getParcelableExtra(FavoriteFragment.GO_EDIT_MENU);
+			if (editMenu != null) {
+				// 즐겨찾기 메뉴의 매장 정보 얻어와서 매장 정보 데이터 세팅
+				NetworkManager.getInstance().getStore(this, editMenu.store_id,
+						new OnResultListener<StoreResult>() {
+
+							@Override
+							public void onSuccess(StoreResult result) {
+								if (result.success == 1) {
+									selectedStore = result.result.items;
+									titleView.setText(selectedStore.name);
+									imgLoader.displayImage(selectedStore.image,
+											storeImgView);
+									storeNameView.setText(selectedStore.name);
+									storeDescView
+											.setText(selectedStore.description);
+									storeStarView.setRating(selectedStore.star);
+								}
+							}
+
+							@Override
+							public void onFail(int code) {
+								Toast.makeText(StoreMenuActivity.this,
+										"매장정보 불러오기에 실패하였습니다", Toast.LENGTH_SHORT)
+										.show();
+							}
+						});
+			}
+
+			// 매장 선택해서 바로 들어온 경우 페이지 상단 매장 정보 세팅
+			if (selectedStore != null) {
+				titleView.setText(selectedStore.name);
+				imgLoader.displayImage(selectedStore.image, storeImgView);
+				storeNameView.setText(selectedStore.name);
+				storeDescView.setText(selectedStore.description);
+				storeStarView.setRating(selectedStore.star);
+			}
+
+			// 핫. 아이스 메뉴정보 프래그먼트로 넘겨줄 번들
+			Bundle selectedStoreBundle = new Bundle();
+			// store_id로 메뉴 검색
+			selectedStoreBundle.putParcelable(
+					HomeAllStoreFragment.SELECTED_STORE, selectedStore);
+
+			/***
+			 * 즐겨찾기->수정 으로 넘어왔을 경우 *** hot, ice 프래그먼트에서 메뉴띄울땐 favoriteItem 정보만
+			 * 있으면 됌 (bundle) *** 매장 상세페이지로 이동할 경우 getstore 로 매장 찾아서
+			 * sortingStore 객체만 전달 (intent)
+			 *********/
+			editFavoriteMenuBundle = new Bundle();
+			editFavoriteMenuBundle.putParcelable(FavoriteFragment.GO_EDIT_MENU,
+					editMenu);
+			// editFavoriteMenuBundle.putParcelable(
+			// HomeAllStoreFragment.SELECTED_STORE, selectedStore);
+
+		}
+
+		tabHost = (FragmentTabHost) findViewById(R.id.store_menu_tab_host);
+		tabHost.setup(this, getSupportFragmentManager(),
+				R.id.store_menu_container);
+
+		if (selectedStore != null) {
+			// 핫. 아이스 메뉴정보 프래그먼트로 넘겨줄 번들
+			Bundle selectedStoreBundle = new Bundle();
+			// store_id로 메뉴 검색
+			selectedStoreBundle.putParcelable(
+					HomeAllStoreFragment.SELECTED_STORE, selectedStore);
+
+			tabHost.addTab(
+					tabHost.newTabSpec(STORE_MENU_TAB1_ID).setIndicator(
+							tab1View), StoreHotMenuFragment.class,
+					selectedStoreBundle);
+			tabHost.addTab(
+					tabHost.newTabSpec(STORE_MENU_TAB2_ID).setIndicator(
+							tab2View), StoreIcedMenuFragment.class,
+					selectedStoreBundle);
+		} else if (editMenu != null) {
+			tabHost.addTab(
+					tabHost.newTabSpec(STORE_MENU_TAB1_ID).setIndicator(
+							tab1View), StoreHotMenuFragment.class,
+					editFavoriteMenuBundle);
+			tabHost.addTab(
+					tabHost.newTabSpec(STORE_MENU_TAB2_ID).setIndicator(
+							tab2View), StoreIcedMenuFragment.class,
+					editFavoriteMenuBundle);
+		}
+
+		cartNumberView = (TextView) findViewById(R.id.store_menu_cart_number_view);
+		cartNumberView.setBackgroundResource(R.drawable.cart_speach_balloon);
+		cartStrapView = (ImageView) findViewById(R.id.store_menu_cart_strap_view);
+		cartStrapView.setImageResource(R.drawable.cart_strap);
+		cartLayout = (FrameLayout) findViewById(R.id.store_menu_cart_container);
+
+		//처음 장바구니 세팅
+//		cart = new CartFragment();
+//		FragmentTransaction ft = getSupportFragmentManager()
+//				.beginTransaction();
+//		ft.replace(R.id.store_menu_cart_container, cart);
+//		ft.commit();
+		
+		
+		// 눌렸을때 장바구니정보 모두 결제내역으로
+		btnPayment = (Button) findViewById(R.id.store_menu_payment_btn);
+
+		initCartNumber();
+		toggleCart();
+
+		btnPayment.setOnClickListener(new View.OnClickListener() {
+
+			/***
+			 * * 결제 내역 제이슨으로
+			 * ****/
+			@Override
+			public void onClick(View v) {
+				
+				// 카트 아이템을 불러와 결제 ㄱㄱ
+				// 카트에 담긴 아이템이 없으면
+				if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+				NetworkManager.getInstance().getCartItem(
+						StoreMenuActivity.this,
+						new OnResultListener<CartResult>() {
+
+							@Override
+							public void onSuccess(CartResult result) {
+								if (result.success == 1) {
+									if (result.result.item_cnt != 0) {
+										goPayment(result.result.items);
+									}
+								}
+							}
+
+							@Override
+							public void onFail(int code) {
+								Toast.makeText(StoreMenuActivity.this,
+										"결제 생성에 실패하였습니다!", Toast.LENGTH_SHORT)
+										.show();
+							}
+						});
+				} else {
+					Toast.makeText(StoreMenuActivity.this,
+							"장바구니에 상품을 먼저 담아주세요!", Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+
+		/***
+		 * 인텐트 전달 매장 정보 넘겨서 매장 상세 정보 store_id 로 매장 검색
+		 * **/
+		storeInfoLayout.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent(StoreMenuActivity.this,
+						StoreInfoActivity.class);
+				if (selectedStore != null) {
+					// 즐겨찾기->수정의 경우 위에서 favoriteItem 의 store_id로 selectedStore =
+					// getStore 했음!
+					i.putExtra(HomeAllStoreFragment.SELECTED_STORE,
+							selectedStore);
+				}
+				startActivity(i);
+				overridePendingTransition(0, 0);
+			}
+		});
+
+	}
+
+	public int getStoreId() {
+		return storeId;
+	}
+	
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		PropertyManager.getInstance().removeCartChangeListener(listener);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		return false;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		if (item.getItemId() == android.R.id.home) {
+			finish();
+			overridePendingTransition(0, 0);
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		overridePendingTransition(0, 0);
+	}
+	
+	OnCartChangeListener listener = new OnCartChangeListener() {
+
+		@Override
+		public void onCartChangeListener() {
+			if(cartStrapView.getVisibility() == ImageView.VISIBLE) {
+				if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+					cartNumberView.setVisibility(ImageView.VISIBLE);
+					cartNumberView.setText(PropertyManager
+							.getInstance().getCartItemNumber() + "");
+					btnPayment.setText("장바구니에 " + PropertyManager.getInstance().getCartItemNumber() + "개의 상품이 담겨있습니다!");
+					// cartAboveNumberView.setText(PropertyManager
+					// .getInstance().getCartItemNumber() + "");
+				} else {
+					cartNumberView.setVisibility(ImageView.GONE);
+					// cartAboveNumberView.setVisibility(ImageView.GONE);
+					btnPayment.setText("장바구니에 상품을 담아주세요!");
+				}
+			} else { 
+				if (PropertyManager.getInstance().getCartItemNumber() != 0) {
+					cartNumberView.setText(PropertyManager
+							.getInstance().getCartItemNumber() + "");
+					btnPayment.setText("장바구니에 " + PropertyManager.getInstance().getCartItemNumber() + "개의 상품이 담겨있습니다!");
+					// cartAboveNumberView.setText(PropertyManager
+					// .getInstance().getCartItemNumber() + "");
+				} else {
+					cartNumberView.setVisibility(ImageView.GONE);
+					// cartAboveNumberView.setVisibility(ImageView.GONE);
+					btnPayment.setText("장바구니에 상품을 담아주세요!");
+				}
+			} //장바구니 아이콘 안보이는 상태
+		}
+	};
+
+
+	private void goPayment(ArrayList<CartItem> items) {
+		// json규격으로 보내줄 결제 내역 객체 생성
+		OrderSendResult sendPaymentResult = new OrderSendResult();
+		sendPaymentResult.store_id = items.get(0).store_id;
+//		try {
+//			sendPaymentResult.store_name = URLEncoder.encode(
+//					items.get(0).storeName, "UTF-8");
+//		} catch (UnsupportedEncodingException e) {
+//			e.printStackTrace();
+//		}
+
+		for (CartItem c : items) {
+			OrderSendItem payItem = new OrderSendItem();
+			payItem.item_id = c.item_id;
+			payItem.item_name = c.menuName;
+
+			payItem.count = c.count;
+
+			payItem.is_whipping = c.is_whipping;
+			payItem.size = c.size;
+
+			sendPaymentResult.items.add(payItem);
+		}
+
+		NetworkManager.getInstance().createOrder(this, sendPaymentResult,
+				new OnResultListener<OrderResult>() {
+
+					@Override
+					public void onSuccess(OrderResult result) {
+						if (result.success == 1) {
+							Intent i = new Intent(StoreMenuActivity.this,
+									PaymentActivity.class);
+							// 받아온 객체 보내줘야함
+							i.putExtra(PaymentActivity.PAYMENT_ORDER_DETAILS,
+									result.result);
+							startActivity(i);
+							overridePendingTransition(0, 0);
+						}
+					}
+
+					@Override
+					public void onFail(int code) {
+
+					}
+				});
+
+	}
+
+	private void initCartNumber() {
+		cartItemCount = PropertyManager.getInstance().getCartItemNumber();
+		if (cartItemCount != 0) {
+			cartNumberView.setText(cartItemCount + "");
+			btnPayment.setText("장바구니에 " + cartItemCount + "개의 상품이 담겨있습니다!");
+		} else {
+			cartNumberView.setVisibility(ImageView.GONE);
+			btnPayment.setText("장바구니에 상품을 담아주세요!");
+		}
+	}
+
+
+	private void toggleCart() {
+		cartStrapView.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				
+				cartLayout.setVisibility(ImageView.VISIBLE);
+				if (!isCartSelected) {
+					cartStrapView.setVisibility(ImageView.GONE);
+					cartNumberView.setVisibility(ImageView.GONE);
+
+					Animation anim = AnimationUtils.loadAnimation(
+							StoreMenuActivity.this, R.anim.cart_slide_in);
+					cartLayout.startAnimation(anim);
+					
+					CartFragment f = new CartFragment();
+					FragmentTransaction ft = getSupportFragmentManager()
+							.beginTransaction();
+					ft.replace(R.id.store_menu_cart_container, f);
+					ft.commit();
+				}
+
+			}
+		});
+
+		cartLayout.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (cartStrapView.getVisibility() == ImageView.GONE) {
+
+					// anim
+					Animation anim = AnimationUtils.loadAnimation(
+							StoreMenuActivity.this, R.anim.cart_slide_out);
+					cartLayout.startAnimation(anim);
+					anim.setAnimationListener(new AnimationListener() {
+
+						@Override
+						public void onAnimationStart(Animation animation) {
+							// TODO Auto-generated method stub
+
+						}
+
+						@Override
+						public void onAnimationRepeat(Animation animation) {
+							// TODO Auto-generated method stub
+
+						}
+
+						@Override
+						public void onAnimationEnd(Animation animation) {
+							cartLayout.setVisibility(ImageView.GONE);
+							if (PropertyManager.getInstance()
+									.getCartItemNumber() != 0) {
+								cartNumberView.setVisibility(ImageView.VISIBLE);
+								cartStrapView.setVisibility(ImageView.VISIBLE);
+							} else {
+								cartNumberView.setVisibility(ImageView.GONE);
+								cartStrapView.setVisibility(ImageView.VISIBLE);
+							}
+						}
+					}); // animation listener
+				}
+			}
+		});
+	}
+
+}
